@@ -1,0 +1,22 @@
+- termination: http
+  connections: 10
+  samples: 1
+  duration: 6s
+  path: /1024.html
+  concurrency: 5
+  tool: wrk
+  serverReplicas: 10
+  tuning:
+    routers: 1
+    threadCount: null
+- termination: edge
+  connections: 10
+  samples: 1
+  duration: 5s
+  path: /1024.html
+  concurrency: 1
+  tool: wrk
+  serverReplicas: 10
+  tuning:
+    routers: 1
+    threadCount: null
