@@ -1,9 +1,20 @@
-- termination: http
+- termination: edge
   connections: 50
-  samples: 3
+  samples: 2
   duration: 10s
-  path: /1024.html
-  concurrency: 5
+  path: /256.html
+  concurrency: 10
+  tool: wrk
+  serverReplicas: 10
+  tuning:
+    routers: 1
+    threadCount: null
+- termination: reencrypt
+  connections: 50
+  samples: 2
+  duration: 10s
+  path: /256.html
+  concurrency: 10
   tool: wrk
   serverReplicas: 10
   tuning:
