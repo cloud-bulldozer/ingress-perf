@@ -19,9 +19,10 @@ var cmd = &cobra.Command{
 func run() *cobra.Command {
 	var cfg, uuid, esServer, esIndex string
 	cmd := &cobra.Command{
-		Use:          "run",
-		Short:        "Run benchmark",
-		SilenceUsage: true,
+		Use:           "run",
+		Short:         "Run benchmark",
+		SilenceUsage:  true,
+		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var indexer *indexers.Indexer
 			var err error
