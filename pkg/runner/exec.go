@@ -34,11 +34,9 @@ func runBenchmark(cfg config.Config, testIndex int) ([]interface{}, error) {
 	} else {
 		ep = fmt.Sprintf("https://%v%v", r.Spec.Host, cfg.Path)
 	}
-	switch cfg.Tool {
-	case "wrk":
-		tool = tools.NewWrk(cfg, ep)
-	default:
-		return benchmarkResult, fmt.Errorf("tool %v not supporte", cfg.Tool)
+	tool, err = tools.New(cfg, ep)
+	if err != nil {
+		return benchmarkResult, err
 	}
 	allClientPods, err := clientSet.CoreV1().Pods(benchmarkNs).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("app=%s", clientName),

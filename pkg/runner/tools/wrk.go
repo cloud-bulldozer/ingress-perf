@@ -12,7 +12,11 @@ type wrk struct {
 	res PodResult
 }
 
-func NewWrk(cfg config.Config, ep string) Tool {
+func init() {
+	toolMap["wrk"] = Wrk
+}
+
+func Wrk(cfg config.Config, ep string) Tool {
 	newWrk := &wrk{
 		cmd: []string{"wrk", "-s", "json.lua", "-c", fmt.Sprint(cfg.Connections), "-d", fmt.Sprintf("%v", cfg.Duration.Seconds()), "--latency", ep},
 		res: PodResult{},
