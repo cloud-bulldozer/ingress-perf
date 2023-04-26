@@ -2,11 +2,11 @@ package runner
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/cloud-bulldozer/go-commons/indexers"
 	"github.com/rsevilla87/ingress-perf/pkg/config"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
@@ -26,8 +26,9 @@ var clientSet *kubernetes.Clientset
 var restConfig *rest.Config
 var orClientSet *openshiftrouteclientset.Clientset
 
-func Start() error {
+func Start(uuid string, indexer *indexers.Indexer) error {
 	var err error
+	var result []interface{}
 	var kubeconfig string
 	log.Info("Starting ingress-perf")
 	if os.Getenv("KUBECONFIG") != "" {
@@ -45,12 +46,21 @@ func Start() error {
 		return err
 	}
 	for i, cfg := range config.Cfg {
+		cfg.UUID = uuid
 		log.Infof("Running test %d/%d", i+1, len(config.Cfg))
 		if err := reconcileNs(cfg, i); err != nil {
 			return err
 		}
-		if err := runBenchmark(cfg, i); err != nil {
+		if result, err = runBenchmark(cfg, i); err != nil {
 			return err
+		}
+		if indexer != nil {
+			log.Info("Indexing benchmark results")
+			msg, err := (*indexer).Index(result, indexers.IndexingOpts{})
+			if err != nil {
+				return err
+			}
+			log.Info(msg)
 		}
 	}
 	return nil
@@ -121,7 +131,7 @@ func deployAssets() error {
 		}
 	}
 	for _, route := range routes {
-		log.Info("Creating route", route.Name)
+		log.Infof("Creating route %s", route.Name)
 		_, err := orClientSet.RouteV1().Routes(benchmarkNs).Get(context.TODO(), route.Name, metav1.GetOptions{})
 		if err != nil {
 			if errors.IsNotFound(err) {
@@ -136,8 +146,15 @@ func deployAssets() error {
 
 func reconcileNs(cfg config.Config, testIndex int) error {
 	f := func(deployment appsv1.Deployment, replicas int32) error {
+		d, err := clientSet.AppsV1().Deployments(benchmarkNs).Get(context.TODO(), deployment.Name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		if d.Spec.Replicas == &replicas {
+			return nil
+		}
 		deployment.Spec.Replicas = &replicas
-		_, err := clientSet.AppsV1().Deployments(benchmarkNs).Update(context.TODO(), &deployment, metav1.UpdateOptions{})
+		_, err = clientSet.AppsV1().Deployments(benchmarkNs).Update(context.TODO(), &deployment, metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
@@ -149,10 +166,11 @@ func reconcileNs(cfg config.Config, testIndex int) error {
 	if err := f(server, cfg.ServerReplicas); err != nil {
 		return err
 	}
-	client.Spec.Template.Labels["test-index"] = fmt.Sprint(testIndex)
 	if err := f(client, cfg.Concurrency); err != nil {
 		return err
 	}
+	/*log.Infof("Waiting %v before running benchmark", waitPeriod)
+	time.Sleep(waitPeriod)*/
 	return nil
 }
 
@@ -168,6 +186,5 @@ func waitForDeployment(ns, deployment string, maxWaitTimeout time.Duration) erro
 		}
 		log.Infof("%d replicas from deployment %s ready", dep.Status.UpdatedReplicas, deployment)
 		return true, nil
-
 	})
 }

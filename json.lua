@@ -15,9 +15,9 @@ done = function(summary, latency, requests)
    io.stderr:write(string.format("\t\"http_errors\": %d,\n", summary.errors.status))
    io.stderr:write(string.format("\t\"timeouts\": %d,\n", summary.errors.timeout))
    io.stderr:write(string.format("\t\"avg_lat_us\": %0.2f,\n", latency.mean))
-   io.stderr:write(string.format("\t\"stdev_lat_us\": %0.2f,\n", latency.stdev))
+   io.stderr:write(string.format("\t\"stdev_lat\": %0.2f,\n", latency.stdev))
    io.stderr:write(string.format("\t\"max_lat_us\": %0.2f,\n", latency.max))
-   for _, p in pairs({ 50, 75, 90, 99}) do
+   for _, p in pairs({90, 95, 99}) do
       n = latency:percentile(p)
       io.stderr:write(string.format("\t\"p%g_lat_us\": %d", p, n))
 	  if p == 99 then

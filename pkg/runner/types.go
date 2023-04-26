@@ -2,6 +2,7 @@ package runner
 
 import (
 	"fmt"
+	"time"
 
 	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -18,8 +19,9 @@ const (
 	serverImage = "quay.io/cloud-bulldozer/nginx:latest"
 	serverName  = "nginx"
 	//clientImage = "quay.io/cloud-bulldozer/ingress-toolbox:latest"
-	clientImage = "quay.io/rsevilla/wrk:latest"
+	clientImage = "quay.io/cloud-bulldozer/wrk:latest"
 	clientName  = "ingress-perf-client"
+	waitPeriod  = 10 * time.Second
 )
 
 var routeGVR = schema.GroupVersionResource{
@@ -34,6 +36,9 @@ var server = appsv1.Deployment{
 		Namespace: benchmarkNs,
 	},
 	Spec: appsv1.DeploymentSpec{
+		Strategy: appsv1.DeploymentStrategy{
+			Type: appsv1.RecreateDeploymentStrategyType,
+		},
 		Selector: &metav1.LabelSelector{
 			MatchLabels: map[string]string{"app": serverName},
 		},
@@ -42,10 +47,14 @@ var server = appsv1.Deployment{
 				Labels: map[string]string{"app": serverName},
 			},
 			Spec: corev1.PodSpec{
+				Affinity: &corev1.Affinity{
+					PodAntiAffinity: &corev1.PodAntiAffinity{},
+				},
 				Containers: []corev1.Container{
 					{
-						Name:  serverName,
-						Image: serverImage,
+						Name:            serverName,
+						Image:           serverImage,
+						ImagePullPolicy: corev1.PullIfNotPresent,
 						SecurityContext: &corev1.SecurityContext{
 							AllowPrivilegeEscalation: pointer.Bool(false),
 							Capabilities:             &corev1.Capabilities{Drop: []corev1.Capability{"ALL"}},
@@ -80,6 +89,9 @@ var client = appsv1.Deployment{
 		Namespace: benchmarkNs,
 	},
 	Spec: appsv1.DeploymentSpec{
+		Strategy: appsv1.DeploymentStrategy{
+			Type: appsv1.RecreateDeploymentStrategyType,
+		},
 		Selector: &metav1.LabelSelector{
 			MatchLabels: map[string]string{"app": clientName},
 		},
@@ -91,9 +103,10 @@ var client = appsv1.Deployment{
 				HostNetwork: true, // Enable hostNetwork in client pods
 				Containers: []corev1.Container{
 					{
-						Command: []string{"sleep", "inf"},
-						Name:    clientName,
-						Image:   clientImage,
+						Command:         []string{"sleep", "inf"},
+						Name:            clientName,
+						Image:           clientImage,
+						ImagePullPolicy: corev1.PullAlways,
 						SecurityContext: &corev1.SecurityContext{
 							AllowPrivilegeEscalation: pointer.Bool(false),
 							Capabilities:             &corev1.Capabilities{Drop: []corev1.Capability{"ALL"}},
