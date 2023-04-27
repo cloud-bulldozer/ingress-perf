@@ -47,6 +47,7 @@ var server = appsv1.Deployment{
 				Labels: map[string]string{"app": serverName},
 			},
 			Spec: corev1.PodSpec{
+				TerminationGracePeriodSeconds: pointer.Int64(0), // Let's kill the pod inmediatly
 				Affinity: &corev1.Affinity{
 					PodAntiAffinity: &corev1.PodAntiAffinity{},
 				},
@@ -100,7 +101,8 @@ var client = appsv1.Deployment{
 				Labels: map[string]string{"app": clientName},
 			},
 			Spec: corev1.PodSpec{
-				HostNetwork: true, // Enable hostNetwork in client pods
+				TerminationGracePeriodSeconds: pointer.Int64(0),
+				HostNetwork:                   true, // Enable hostNetwork in client pods
 				Containers: []corev1.Container{
 					{
 						Command:         []string{"sleep", "inf"},
