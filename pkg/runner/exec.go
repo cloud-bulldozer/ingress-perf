@@ -61,6 +61,7 @@ func runBenchmark(cfg config.Config, testIndex int) ([]interface{}, error) {
 			Timestamp: time.Now().UTC(),
 		}
 		log.Infof("Running sample %d/%d: %v", i, cfg.Samples, cfg.Duration)
+		// TODO ingress controller warmup is needed
 		for _, pod := range clientPods {
 			wg.Add(1)
 			go exec(context.TODO(), &wg, tool, pod, &result)
