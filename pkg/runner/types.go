@@ -30,6 +30,24 @@ var routeGVR = schema.GroupVersionResource{
 	Resource: "routes",
 }
 
+var workerAffinity = &corev1.Affinity{
+	NodeAffinity: &corev1.NodeAffinity{
+		PreferredDuringSchedulingIgnoredDuringExecution: []corev1.PreferredSchedulingTerm{
+			{
+				Weight: 100,
+				Preference: corev1.NodeSelectorTerm{
+					MatchExpressions: []corev1.NodeSelectorRequirement{
+						{
+							Key:      "node-role.kubernetes.io/worker",
+							Operator: corev1.NodeSelectorOpExists,
+						},
+					},
+				},
+			},
+		},
+	},
+}
+
 var server = appsv1.Deployment{
 	ObjectMeta: metav1.ObjectMeta{
 		Name:      serverName,
@@ -47,10 +65,8 @@ var server = appsv1.Deployment{
 				Labels: map[string]string{"app": serverName},
 			},
 			Spec: corev1.PodSpec{
+				Affinity:                      workerAffinity,
 				TerminationGracePeriodSeconds: pointer.Int64(0), // Let's kill the pod inmediatly
-				Affinity: &corev1.Affinity{
-					PodAntiAffinity: &corev1.PodAntiAffinity{},
-				},
 				Containers: []corev1.Container{
 					{
 						Name:            serverName,
@@ -101,6 +117,7 @@ var client = appsv1.Deployment{
 				Labels: map[string]string{"app": clientName},
 			},
 			Spec: corev1.PodSpec{
+				Affinity:                      workerAffinity,
 				TerminationGracePeriodSeconds: pointer.Int64(0),
 				HostNetwork:                   true, // Enable hostNetwork in client pods
 				Containers: []corev1.Container{
