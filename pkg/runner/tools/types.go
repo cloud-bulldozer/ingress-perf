@@ -22,6 +22,9 @@ type PodResult struct {
 	P90Latency   int64   `json:"p90_lat_us"`
 	P95Latency   int64   `json:"p95_lat_us"`
 	P99Latency   int64   `json:"p99_lat_us"`
+	Errors       int64   `json:"http_errors"`
+	Requests     int64   `json:"requests"`
+	Timeouts     int64   `json:"timeouts"`
 }
 
 type Result struct {
@@ -38,4 +41,7 @@ type Result struct {
 	P90Latency   float64       `json:"p90_lat_us"`
 	P95Latency   float64       `json:"p95_lat_us"`
 	P99Latency   float64       `json:"p99_lat_us"`
+	Errors       int64         `json:"http_errors"`
+	Requests     int64         `json:"requests"`
+	Timeouts     int64         `json:"timeouts"`
 }

@@ -67,6 +67,7 @@ func runBenchmark(cfg config.Config, testIndex int) ([]interface{}, error) {
 		}
 		wg.Wait()
 		genResultSummary(&result)
+		log.Infof("Summary: Rps=%.2f req/s avgLatency=%.2f μs P99Latency=%.2f μs", result.TotalAvgRps, result.AvgLatency, result.P99Latency)
 		benchmarkResult = append(benchmarkResult, result)
 	}
 	return benchmarkResult, nil
@@ -109,7 +110,7 @@ func exec(ctx context.Context, wg *sync.WaitGroup, tool tools.Tool, pod corev1.P
 	lock.Lock()
 	result.Pods = append(result.Pods, podResult)
 	lock.Unlock()
-	log.Infof("%s: avgRps: %.2f req/s avgLatency: %.2f μs", podResult.Name, podResult.AvgRps, podResult.AvgLatency)
+	log.Debugf("%s: avgRps: %.2f req/s avgLatency: %.2f μs", podResult.Name, podResult.AvgRps, podResult.AvgLatency)
 }
 
 func genResultSummary(result *tools.Result) {
@@ -118,6 +119,9 @@ func genResultSummary(result *tools.Result) {
 		result.StdevRps += pod.StdevRps
 		result.AvgLatency += pod.AvgLatency
 		result.StdevLatency += pod.StdevLatency
+		result.Errors += pod.Errors
+		result.Requests += pod.Requests
+		result.Timeouts += pod.Timeouts
 		if pod.MaxLatency > result.MaxLatency {
 			result.MaxLatency = pod.MaxLatency
 		}

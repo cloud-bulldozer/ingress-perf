@@ -8,6 +8,7 @@ import (
 	_ "github.com/rsevilla87/ingress-perf/pkg/log"
 	"github.com/rsevilla87/ingress-perf/pkg/runner"
 	uid "github.com/satori/go.uuid"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -17,12 +18,21 @@ var cmd = &cobra.Command{
 }
 
 func run() *cobra.Command {
-	var cfg, uuid, esServer, esIndex string
+	var cfg, uuid, esServer, esIndex, logLevel string
+	var cleanup bool
 	cmd := &cobra.Command{
 		Use:           "run",
 		Short:         "Run benchmark",
 		SilenceUsage:  true,
 		SilenceErrors: true,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			lvl, err := logrus.ParseLevel(logLevel)
+			if err != nil {
+				return err
+			}
+			logrus.SetLevel(lvl)
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var indexer *indexers.Indexer
 			var err error
@@ -42,13 +52,21 @@ func run() *cobra.Command {
 					return err
 				}
 			}
-			return runner.Start(uuid, indexer)
+			if err = runner.Start(uuid, indexer); err != nil {
+				return err
+			}
+			if cleanup {
+				err = runner.Cleanup(10 * time.Minute)
+			}
+			return err
 		},
 	}
 	cmd.Flags().StringVarP(&cfg, "cfg", "c", "", "Configuration file")
 	cmd.Flags().StringVar(&uuid, "uuid", uid.NewV4().String(), "Benchmark uuid")
 	cmd.Flags().StringVar(&esServer, "es-server", "", "Elastic Search endpoint")
 	cmd.Flags().StringVar(&esIndex, "es-index", "ingress-performance", "Elastic Search index")
+	cmd.Flags().BoolVar(&cleanup, "cleanup", true, "Cleanup benchmark assets")
+	cmd.Flags().StringVar(&logLevel, "loglevel", "info", "Log level. Allowed levels are error, info and debug")
 	cmd.MarkFlagRequired("cfg")
 	return cmd
 }
@@ -57,7 +75,7 @@ func cleanup() *cobra.Command {
 	var timeout time.Duration
 	cmd := &cobra.Command{
 		Use:          "cleanup",
-		Short:        "Cleanup benchmark resources",
+		Short:        "Cleanup benchmark assets",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runner.Cleanup(timeout)

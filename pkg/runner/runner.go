@@ -47,7 +47,7 @@ func Start(uuid string, indexer *indexers.Indexer) error {
 	}
 	for i, cfg := range config.Cfg {
 		cfg.UUID = uuid
-		log.Infof("Running test %d/%d", i+1, len(config.Cfg))
+		log.Infof("Running test %d/%d: %v", i+1, len(config.Cfg), cfg.Termination)
 		if err := reconcileNs(cfg, i); err != nil {
 			return err
 		}
@@ -55,7 +55,6 @@ func Start(uuid string, indexer *indexers.Indexer) error {
 			return err
 		}
 		if indexer != nil {
-			log.Info("Indexing benchmark results")
 			msg, err := (*indexer).Index(result, indexers.IndexingOpts{})
 			if err != nil {
 				return err
@@ -89,56 +88,32 @@ func cleanup(timeout time.Duration) error {
 }
 
 func deployAssets() error {
+	log.Infof("Deploying benchmark assets")
 	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: benchmarkNs}}
 	_, err := clientSet.CoreV1().Namespaces().Create(context.TODO(), ns, metav1.CreateOptions{})
-	if err != nil {
-		if errors.IsAlreadyExists(err) {
-			log.Infof("Namespace %s already exists", benchmarkNs)
-		} else {
-			return err
-		}
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return err
 	}
 	_, err = clientSet.AppsV1().Deployments(benchmarkNs).Create(context.TODO(), &server, metav1.CreateOptions{})
-	if err != nil {
-		if errors.IsAlreadyExists(err) {
-			log.Infof("Deployment %s already exists", server.Name)
-		} else {
-			return err
-		}
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return err
 	}
 	_, err = clientSet.RbacV1().ClusterRoleBindings().Create(context.TODO(), &clientCRB, metav1.CreateOptions{})
-	if err != nil {
-		if errors.IsAlreadyExists(err) {
-			log.Infof("ClusterRoleBinding %s already exists", clientCRB.Name)
-		} else {
-			return err
-		}
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return err
 	}
 	_, err = clientSet.AppsV1().Deployments(benchmarkNs).Create(context.TODO(), &client, metav1.CreateOptions{})
-	if err != nil {
-		if errors.IsAlreadyExists(err) {
-			log.Infof("Deployment %s already exists", client.Name)
-		} else {
-			return err
-		}
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return err
 	}
 	_, err = clientSet.CoreV1().Services(benchmarkNs).Create(context.TODO(), &service, metav1.CreateOptions{})
-	if err != nil {
-		if errors.IsAlreadyExists(err) {
-			log.Infof("Service %s already exists", service.Name)
-		} else {
-			return err
-		}
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return err
 	}
 	for _, route := range routes {
-		log.Infof("Creating route %s", route.Name)
-		_, err := orClientSet.RouteV1().Routes(benchmarkNs).Get(context.TODO(), route.Name, metav1.GetOptions{})
-		if err != nil {
-			if errors.IsNotFound(err) {
-				if _, err = orClientSet.RouteV1().Routes(benchmarkNs).Create(context.TODO(), &route, metav1.CreateOptions{}); err != nil {
-					return err
-				}
-			}
+		_, err = orClientSet.RouteV1().Routes(benchmarkNs).Create(context.TODO(), &route, metav1.CreateOptions{})
+		if err != nil && !errors.IsAlreadyExists(err) {
+			return err
 		}
 	}
 	return nil
@@ -169,8 +144,6 @@ func reconcileNs(cfg config.Config, testIndex int) error {
 	if err := f(client, cfg.Concurrency); err != nil {
 		return err
 	}
-	/*log.Infof("Waiting %v before running benchmark", waitPeriod)
-	time.Sleep(waitPeriod)*/
 	return nil
 }
 
@@ -184,7 +157,7 @@ func waitForDeployment(ns, deployment string, maxWaitTimeout time.Duration) erro
 			log.Debugf("Waiting for replicas from deployment %s in ns %s to be ready", deployment, ns)
 			return false, nil
 		}
-		log.Infof("%d replicas from deployment %s ready", dep.Status.UpdatedReplicas, deployment)
+		log.Debugf("%d replicas from deployment %s ready", dep.Status.UpdatedReplicas, deployment)
 		return true, nil
 	})
 }
