@@ -1,5 +1,5 @@
 FROM registry.access.redhat.com/ubi8/ubi:latest as builder
-RUN dnf install -y make git unzip gcc
+RUN dnf install -y make git unzip gcc iproute
 RUN git clone https://github.com/wg/wrk.git --depth=1
 RUN cd wrk && make -j $(nproc)
 
