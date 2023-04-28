@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
@@ -22,8 +23,9 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-var clientSet *kubernetes.Clientset
 var restConfig *rest.Config
+var clientSet *kubernetes.Clientset
+var dynamicClient *dynamic.DynamicClient
 var orClientSet *openshiftrouteclientset.Clientset
 
 func Start(uuid string, indexer *indexers.Indexer) error {
@@ -42,6 +44,7 @@ func Start(uuid string, indexer *indexers.Indexer) error {
 	}
 	clientSet = kubernetes.NewForConfigOrDie(restConfig)
 	orClientSet = openshiftrouteclientset.NewForConfigOrDie(restConfig)
+	dynamicClient = dynamic.NewForConfigOrDie(restConfig)
 	if err := deployAssets(); err != nil {
 		return err
 	}
@@ -50,6 +53,11 @@ func Start(uuid string, indexer *indexers.Indexer) error {
 		log.Infof("Running test %d/%d: %v", i+1, len(config.Cfg), cfg.Termination)
 		if err := reconcileNs(cfg, i); err != nil {
 			return err
+		}
+		if cfg.Tuning != "" {
+			if err = ApplyTunning(cfg.Tuning); err != nil {
+				return err
+			}
 		}
 		if result, err = runBenchmark(cfg, i); err != nil {
 			return err
