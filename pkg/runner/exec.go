@@ -19,7 +19,7 @@ import (
 
 var lock = &sync.Mutex{}
 
-func runBenchmark(cfg config.Config, testIndex int) ([]interface{}, error) {
+func runBenchmark(cfg config.Config) ([]interface{}, error) {
 	var benchmarkResult []interface{}
 	var clientPods []corev1.Pod
 	var wg sync.WaitGroup

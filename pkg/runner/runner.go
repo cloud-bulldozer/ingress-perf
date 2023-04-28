@@ -51,7 +51,7 @@ func Start(uuid string, indexer *indexers.Indexer) error {
 	for i, cfg := range config.Cfg {
 		cfg.UUID = uuid
 		log.Infof("Running test %d/%d: %v", i+1, len(config.Cfg), cfg.Termination)
-		if err := reconcileNs(cfg, i); err != nil {
+		if err := reconcileNs(cfg); err != nil {
 			return err
 		}
 		if cfg.Tuning != "" {
@@ -59,7 +59,7 @@ func Start(uuid string, indexer *indexers.Indexer) error {
 				return err
 			}
 		}
-		if result, err = runBenchmark(cfg, i); err != nil {
+		if result, err = runBenchmark(cfg); err != nil {
 			return err
 		}
 		if indexer != nil {
@@ -127,7 +127,7 @@ func deployAssets() error {
 	return nil
 }
 
-func reconcileNs(cfg config.Config, testIndex int) error {
+func reconcileNs(cfg config.Config) error {
 	f := func(deployment appsv1.Deployment, replicas int32) error {
 		d, err := clientSet.AppsV1().Deployments(benchmarkNs).Get(context.TODO(), deployment.Name, metav1.GetOptions{})
 		if err != nil {
