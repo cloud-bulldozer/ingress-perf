@@ -161,7 +161,7 @@ func waitForDeployment(ns, deployment string, maxWaitTimeout time.Duration) erro
 		if err != nil {
 			return false, err
 		}
-		if *dep.Spec.Replicas != dep.Status.ReadyReplicas {
+		if *dep.Spec.Replicas != dep.Status.ReadyReplicas || *dep.Spec.Replicas != dep.Status.AvailableReplicas {
 			log.Debugf("Waiting for replicas from deployment %s in ns %s to be ready", deployment, ns)
 			return false, nil
 		}
