@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	ocpmetadata "github.com/cloud-bulldozer/go-commons/ocp-metadata"
 	"github.com/rsevilla87/ingress-perf/pkg/config"
 	"github.com/rsevilla87/ingress-perf/pkg/runner/tools"
 	log "github.com/sirupsen/logrus"
@@ -19,7 +20,7 @@ import (
 
 var lock = &sync.Mutex{}
 
-func runBenchmark(cfg config.Config) ([]interface{}, error) {
+func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata) ([]interface{}, error) {
 	var benchmarkResult []interface{}
 	var clientPods []corev1.Pod
 	var wg sync.WaitGroup
@@ -44,7 +45,7 @@ func runBenchmark(cfg config.Config) ([]interface{}, error) {
 	if err != nil {
 		return benchmarkResult, err
 	}
-	// Filter out pods in terminating status from the list
+	// Filter out pods in terminating state from the list
 	for _, p := range allClientPods.Items {
 		if p.DeletionTimestamp == nil {
 			clientPods = append(clientPods, p)
@@ -55,10 +56,11 @@ func runBenchmark(cfg config.Config) ([]interface{}, error) {
 	}
 	for i := 1; i <= cfg.Samples; i++ {
 		result := tools.Result{
-			UUID:      cfg.UUID,
-			Sample:    i,
-			Config:    cfg,
-			Timestamp: time.Now().UTC(),
+			UUID:            cfg.UUID,
+			Sample:          i,
+			Config:          cfg,
+			Timestamp:       time.Now().UTC(),
+			ClusterMetadata: clusterMetadata,
 		}
 		log.Infof("Running sample %d/%d: %v", i, cfg.Samples, cfg.Duration)
 		// TODO ingress controller warmup is needed
@@ -93,6 +95,7 @@ func exec(ctx context.Context, wg *sync.WaitGroup, tool tools.Tool, pod corev1.P
 	exec, err := remotecommand.NewSPDYExecutor(restConfig, "POST", req.URL())
 	if err != nil {
 		log.Error(err.Error())
+		return
 	}
 	err = exec.StreamWithContext(ctx, remotecommand.StreamOptions{
 		Stdout: &stdout,
@@ -103,10 +106,19 @@ func exec(ctx context.Context, wg *sync.WaitGroup, tool tools.Tool, pod corev1.P
 		return
 	}
 	podResult, err := tool.ParseResult(stdout.String(), stderr.String())
+	if err != nil {
+		log.Errorf("Result parsing failed, skipping: %v", err.Error())
+		return
+	}
 	podResult.Name = pod.Name
 	podResult.Node = pod.Spec.NodeName
+	node, err := clientSet.CoreV1().Nodes().Get(context.TODO(), podResult.Node, metav1.GetOptions{})
 	if err != nil {
-		log.Fatal(err)
+		log.Errorf("Couldn't fetch node: %v", err.Error())
+		return
+	}
+	if d, ok := node.Labels["node.kubernetes.io/instance-type"]; ok {
+		podResult.InstanceType = d
 	}
 	lock.Lock()
 	result.Pods = append(result.Pods, podResult)

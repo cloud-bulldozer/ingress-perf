@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cloud-bulldozer/go-commons/indexers"
+	ocpmetadata "github.com/cloud-bulldozer/go-commons/ocp-metadata"
 	"github.com/rsevilla87/ingress-perf/pkg/config"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
@@ -45,6 +46,14 @@ func Start(uuid string, indexer *indexers.Indexer) error {
 	clientSet = kubernetes.NewForConfigOrDie(restConfig)
 	orClientSet = openshiftrouteclientset.NewForConfigOrDie(restConfig)
 	dynamicClient = dynamic.NewForConfigOrDie(restConfig)
+	ocpMetadata, err := ocpmetadata.NewMetadata(restConfig)
+	if err != nil {
+		return err
+	}
+	clusterMetadata, err := ocpMetadata.GetClusterMetadata()
+	if err != nil {
+		return err
+	}
 	if err := deployAssets(); err != nil {
 		return err
 	}
@@ -59,7 +68,7 @@ func Start(uuid string, indexer *indexers.Indexer) error {
 				return err
 			}
 		}
-		if result, err = runBenchmark(cfg); err != nil {
+		if result, err = runBenchmark(cfg, clusterMetadata); err != nil {
 			return err
 		}
 		if indexer != nil {

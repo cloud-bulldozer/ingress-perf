@@ -3,16 +3,16 @@ module github.com/rsevilla87/ingress-perf
 go 1.19
 
 require (
-	github.com/cloud-bulldozer/go-commons v1.0.0
+	github.com/cloud-bulldozer/go-commons v1.0.1
 	github.com/openshift/api v0.0.0-20230414095907-0540dde8186d
 	github.com/openshift/client-go v0.0.0-20221019143426-16aed247da5c
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.7.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.27.0
-	k8s.io/apimachinery v0.27.0
-	k8s.io/client-go v0.27.0
+	k8s.io/api v0.27.1
+	k8s.io/apimachinery v0.27.1
+	k8s.io/client-go v0.27.1
 	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2
 )
 

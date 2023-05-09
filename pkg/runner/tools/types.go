@@ -3,6 +3,7 @@ package tools
 import (
 	"time"
 
+	ocpmetadata "github.com/cloud-bulldozer/go-commons/ocp-metadata"
 	"github.com/rsevilla87/ingress-perf/pkg/config"
 )
 
@@ -14,6 +15,7 @@ type Tool interface {
 type PodResult struct {
 	Name         string  `json:"pod"`
 	Node         string  `json:"node"`
+	InstanceType string  `json:"instanceType"`
 	AvgRps       float64 `json:"rps"`
 	StdevRps     float64 `json:"rps_stdev"`
 	StdevLatency float64 `json:"stdev_lat"`
@@ -44,4 +46,5 @@ type Result struct {
 	Errors       int64         `json:"http_errors"`
 	Requests     int64         `json:"requests"`
 	Timeouts     int64         `json:"timeouts"`
+	ocpmetadata.ClusterMetadata
 }
