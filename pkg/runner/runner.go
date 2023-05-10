@@ -87,15 +87,11 @@ func Start(uuid string, indexer *indexers.Indexer) error {
 }
 
 func Cleanup(timeout time.Duration) error {
-	return cleanup(timeout)
-}
-
-func cleanup(timeout time.Duration) error {
 	log.Info("Cleaning up resources")
 	if err := clientSet.CoreV1().Namespaces().Delete(context.TODO(), benchmarkNs, metav1.DeleteOptions{}); err != nil {
 		return err
 	}
-	wait.PollUntilContextTimeout(context.TODO(), time.Second, timeout, true, func(ctx context.Context) (bool, error) {
+	err := wait.PollUntilContextTimeout(context.TODO(), time.Second, timeout, true, func(ctx context.Context) (bool, error) {
 		_, err := clientSet.CoreV1().Namespaces().Get(context.TODO(), benchmarkNs, metav1.GetOptions{})
 		if err != nil {
 			if errors.IsNotFound(err) {
@@ -105,6 +101,9 @@ func cleanup(timeout time.Duration) error {
 		}
 		return false, nil
 	})
+	if err != nil {
+		return err
+	}
 	return clientSet.RbacV1().ClusterRoleBindings().Delete(context.Background(), clientCRB.Name, metav1.DeleteOptions{})
 }
 

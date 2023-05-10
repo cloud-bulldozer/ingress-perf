@@ -6,8 +6,6 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
-var Cfg []Config
-
 // UnmarshalYAML implements YAML unmarshalleer to set default values in the config
 func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type ConfigDefaulted Config

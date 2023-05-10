@@ -71,24 +71,8 @@ func run() *cobra.Command {
 	return cmd
 }
 
-func cleanup() *cobra.Command {
-	var timeout time.Duration
-	cmd := &cobra.Command{
-		Use:          "cleanup",
-		Short:        "Cleanup benchmark assets",
-		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runner.Cleanup(timeout)
-			return err
-		},
-	}
-	cmd.Flags().DurationVarP(&timeout, "timeout", "t", time.Minute, "Cleanup timeout")
-	return cmd
-}
-
 func main() {
 	cmd.AddCommand(run())
-	cmd.AddCommand(cleanup())
 	if err := cmd.Execute(); err != nil {
 		log.Fatal(err.Error())
 	}
