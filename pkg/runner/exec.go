@@ -71,9 +71,9 @@ func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata
 		genResultSummary(&result)
 		log.Infof("Summary: Rps=%.2f req/s avgLatency=%.2f μs P99Latency=%.2f μs", result.TotalAvgRps, result.AvgLatency, result.P99Latency)
 		benchmarkResult = append(benchmarkResult, result)
-		if cfg.SampleDelay != 0 {
-			log.Info("Sleeping for ", cfg.SampleDelay)
-			time.Sleep(cfg.SampleDelay)
+		if cfg.Delay != 0 {
+			log.Info("Sleeping for ", cfg.Delay)
+			time.Sleep(cfg.Delay)
 		}
 	}
 	return benchmarkResult, nil
