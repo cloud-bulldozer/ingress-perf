@@ -13,4 +13,6 @@ type Config struct {
 	Tool           string        `yaml:"tool" json:"tool"`
 	ServerReplicas int32         `yaml:"serverReplicas" json:"serverReplicas"`
 	Tuning         string        `yaml:"tuningPatch" json:"tuningPatch"`
+	SampleDelay    time.Duration `yaml:"sampleDelay"`
+	Warmup         bool          `yaml:"warmup" json:"-"`
 }

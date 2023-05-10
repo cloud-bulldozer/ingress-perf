@@ -72,11 +72,15 @@ func Start(uuid string, indexer *indexers.Indexer) error {
 			return err
 		}
 		if indexer != nil {
-			msg, err := (*indexer).Index(result, indexers.IndexingOpts{})
-			if err != nil {
-				return err
+			if !cfg.Warmup {
+				msg, err := (*indexer).Index(result, indexers.IndexingOpts{})
+				if err != nil {
+					return err
+				}
+				log.Info(msg)
+			} else {
+				log.Info("Warmup is enabled, skipping indexing")
 			}
-			log.Info(msg)
 		}
 	}
 	return nil
