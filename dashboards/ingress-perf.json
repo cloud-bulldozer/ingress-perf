@@ -1,0 +1,1174 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_AWS_DEV - INGRESS PERFORMANCE - NEW",
+      "label": "AWS Dev - Ingress performance - new",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "elasticsearch",
+      "pluginName": "Elasticsearch"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "panel",
+      "id": "bargauge",
+      "name": "Bar gauge",
+      "version": ""
+    },
+    {
+      "type": "datasource",
+      "id": "elasticsearch",
+      "name": "Elasticsearch",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "gauge",
+      "name": "Gauge",
+      "version": ""
+    },
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "9.3.2"
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "${DS_AWS_DEV - INGRESS PERFORMANCE - NEW}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "inspect": true
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 38,
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "9.3.2",
+      "repeat": "uuid",
+      "repeatDirection": "v",
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_AWS_DEV - INGRESS PERFORMANCE - NEW}"
+          },
+          "hide": false,
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "1"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "query": "uuid.keyword: $uuid",
+          "refId": "A",
+          "timeField": "timestamp"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id": true,
+              "_index": true,
+              "_type": true,
+              "avg_lat_us": true,
+              "config.Delay": true,
+              "config.concurrency": true,
+              "config.connections": true,
+              "config.duration": true,
+              "config.path": true,
+              "config.samples": true,
+              "config.serverReplicas": true,
+              "config.termination": true,
+              "config.tool": true,
+              "config.tuningPatch": true,
+              "highlight": true,
+              "http_errors": true,
+              "infraNodesCount": false,
+              "masterNodesType": false,
+              "max_lat_us": true,
+              "metricName": true,
+              "p90_lat_us": true,
+              "p95_lat_us": true,
+              "p99_lat_us": true,
+              "platform": false,
+              "pods": true,
+              "requests": true,
+              "rps_stdev": true,
+              "sample": true,
+              "sort": true,
+              "stdev_lat": true,
+              "timeouts": true,
+              "timestamp": true,
+              "total_avg_rps": true,
+              "uuid": false
+            },
+            "indexByName": {
+              "_id": 2,
+              "_index": 3,
+              "_type": 4,
+              "avg_lat_us": 5,
+              "clusterName": 6,
+              "config.Delay": 7,
+              "config.concurrency": 8,
+              "config.connections": 9,
+              "config.duration": 10,
+              "config.path": 11,
+              "config.samples": 12,
+              "config.serverReplicas": 13,
+              "config.termination": 14,
+              "config.tool": 15,
+              "config.tuningPatch": 16,
+              "highlight": 17,
+              "http_errors": 18,
+              "infraNodesCount": 25,
+              "infraNodesType": 26,
+              "k8sVersion": 20,
+              "masterNodesCount": 21,
+              "masterNodesType": 22,
+              "max_lat_us": 27,
+              "metricName": 28,
+              "ocpVersion": 19,
+              "p90_lat_us": 29,
+              "p95_lat_us": 30,
+              "p99_lat_us": 31,
+              "platform": 32,
+              "pods": 33,
+              "region": 34,
+              "requests": 35,
+              "rps_stdev": 36,
+              "sample": 37,
+              "sdnType": 38,
+              "sort": 39,
+              "stdev_lat": 40,
+              "timeouts": 41,
+              "timestamp": 1,
+              "totalNodes": 42,
+              "total_avg_rps": 43,
+              "uuid": 0,
+              "workerNodesCount": 23,
+              "workerNodesType": 24
+            },
+            "renameByName": {
+              "clusterName": "Cluster name",
+              "http_errors": "",
+              "infraNodesCount": "Infras",
+              "infraNodesType": "Infras type",
+              "k8sVersion": "k8s version",
+              "masterNodesCount": "Masters",
+              "masterNodesType": "Masters type",
+              "ocpVersion": "Version",
+              "workerNodesCount": "Workers",
+              "workerNodesType": "Workers type"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 2
+      },
+      "id": 16,
+      "panels": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_AWS_DEV - INGRESS PERFORMANCE - NEW}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 2,
+              "mappings": [],
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 12,
+            "x": 0,
+            "y": 3
+          },
+          "id": 2,
+          "maxPerRow": 4,
+          "options": {
+            "displayMode": "basic",
+            "minVizHeight": 10,
+            "minVizWidth": 0,
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "/^Average$/",
+              "values": true
+            },
+            "showUnfilled": true,
+            "text": {}
+          },
+          "pluginVersion": "9.3.2",
+          "repeat": "concurrency",
+          "repeatDirection": "h",
+          "targets": [
+            {
+              "alias": "",
+              "bucketAggs": [
+                {
+                  "field": "$compare_by",
+                  "id": "7",
+                  "settings": {
+                    "min_doc_count": "1",
+                    "order": "desc",
+                    "orderBy": "_term",
+                    "size": "10"
+                  },
+                  "type": "terms"
+                }
+              ],
+              "datasource": {
+                "type": "elasticsearch",
+                "uid": "${DS_AWS_DEV - INGRESS PERFORMANCE - NEW}"
+              },
+              "metrics": [
+                {
+                  "field": "total_avg_rps",
+                  "id": "1",
+                  "type": "avg"
+                }
+              ],
+              "query": "uuid.keyword: $uuid AND config.termination.keyword: $termination AND config.concurrency: $concurrency",
+              "refId": "A",
+              "timeField": "timestamp"
+            }
+          ],
+          "title": "RPS $termination. $concurrency clients",
+          "transformations": [],
+          "type": "bargauge"
+        },
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_AWS_DEV - INGRESS PERFORMANCE - NEW}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": 0.3
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.5
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 12,
+            "x": 0,
+            "y": 7
+          },
+          "id": 4,
+          "maxPerRow": 4,
+          "options": {
+            "orientation": "vertical",
+            "reduceOptions": {
+              "calcs": [
+                "stdDev"
+              ],
+              "fields": "/^CV$/",
+              "values": true
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true,
+            "text": {
+              "titleSize": 12
+            }
+          },
+          "pluginVersion": "9.3.2",
+          "repeat": "concurrency",
+          "repeatDirection": "h",
+          "targets": [
+            {
+              "alias": "",
+              "bucketAggs": [
+                {
+                  "field": "$compare_by",
+                  "id": "7",
+                  "settings": {
+                    "min_doc_count": "1",
+                    "order": "desc",
+                    "orderBy": "_term",
+                    "size": "10"
+                  },
+                  "type": "terms"
+                }
+              ],
+              "datasource": {
+                "type": "elasticsearch",
+                "uid": "${DS_AWS_DEV - INGRESS PERFORMANCE - NEW}"
+              },
+              "hide": false,
+              "metrics": [
+                {
+                  "field": "total_avg_rps",
+                  "id": "1",
+                  "meta": {
+                    "std_deviation": true,
+                    "std_deviation_bounds_lower": false,
+                    "std_deviation_bounds_upper": false
+                  },
+                  "type": "extended_stats"
+                },
+                {
+                  "field": "total_avg_rps",
+                  "id": "8",
+                  "type": "avg"
+                }
+              ],
+              "query": "uuid.keyword: $uuid AND config.termination.keyword: $termination AND config.concurrency: $concurrency",
+              "refId": "A",
+              "timeField": "timestamp"
+            }
+          ],
+          "title": "RPS data quality: $concurrency clients",
+          "transformations": [
+            {
+              "id": "calculateField",
+              "options": {
+                "alias": "CV",
+                "binary": {
+                  "left": "Std Dev",
+                  "operator": "/",
+                  "reducer": "sum",
+                  "right": "Average"
+                },
+                "mode": "binary",
+                "reduce": {
+                  "reducer": "sum"
+                },
+                "replaceFields": false
+              }
+            }
+          ],
+          "type": "gauge"
+        },
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_AWS_DEV - INGRESS PERFORMANCE - NEW}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 2,
+              "mappings": [],
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "µs"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 12,
+            "x": 0,
+            "y": 11
+          },
+          "id": 27,
+          "maxPerRow": 4,
+          "options": {
+            "displayMode": "basic",
+            "minVizHeight": 10,
+            "minVizWidth": 0,
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "/^Average$/",
+              "values": true
+            },
+            "showUnfilled": true
+          },
+          "pluginVersion": "9.3.2",
+          "repeat": "concurrency",
+          "repeatDirection": "h",
+          "targets": [
+            {
+              "alias": "",
+              "bucketAggs": [
+                {
+                  "field": "$compare_by",
+                  "id": "7",
+                  "settings": {
+                    "min_doc_count": "1",
+                    "order": "desc",
+                    "orderBy": "_term",
+                    "size": "10"
+                  },
+                  "type": "terms"
+                }
+              ],
+              "datasource": {
+                "type": "elasticsearch",
+                "uid": "${DS_AWS_DEV - INGRESS PERFORMANCE - NEW}"
+              },
+              "metrics": [
+                {
+                  "field": "$latency_metric",
+                  "id": "1",
+                  "type": "avg"
+                }
+              ],
+              "query": "uuid.keyword: $uuid AND config.termination.keyword: $termination AND config.concurrency: $concurrency",
+              "refId": "A",
+              "timeField": "timestamp"
+            }
+          ],
+          "title": "$latency_metric $termination: $concurrency clients",
+          "transformations": [],
+          "type": "bargauge"
+        },
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_AWS_DEV - INGRESS PERFORMANCE - NEW}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": 0.3
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.5
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 12,
+            "x": 0,
+            "y": 15
+          },
+          "id": 28,
+          "options": {
+            "orientation": "vertical",
+            "reduceOptions": {
+              "calcs": [
+                "stdDev"
+              ],
+              "fields": "/^CV$/",
+              "values": true
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true,
+            "text": {
+              "titleSize": 12
+            }
+          },
+          "pluginVersion": "9.3.2",
+          "repeat": "concurrency",
+          "repeatDirection": "h",
+          "targets": [
+            {
+              "alias": "",
+              "bucketAggs": [
+                {
+                  "field": "$compare_by",
+                  "id": "7",
+                  "settings": {
+                    "min_doc_count": "1",
+                    "order": "desc",
+                    "orderBy": "_term",
+                    "size": "10"
+                  },
+                  "type": "terms"
+                }
+              ],
+              "datasource": {
+                "type": "elasticsearch",
+                "uid": "${DS_AWS_DEV - INGRESS PERFORMANCE - NEW}"
+              },
+              "hide": false,
+              "metrics": [
+                {
+                  "field": "$latency_metric",
+                  "id": "1",
+                  "meta": {
+                    "std_deviation": true,
+                    "std_deviation_bounds_lower": false,
+                    "std_deviation_bounds_upper": false
+                  },
+                  "type": "extended_stats"
+                },
+                {
+                  "field": "$latency_metric",
+                  "id": "8",
+                  "type": "avg"
+                }
+              ],
+              "query": "uuid.keyword: $uuid AND config.termination.keyword: $termination AND config.concurrency: $concurrency",
+              "refId": "A",
+              "timeField": "timestamp"
+            }
+          ],
+          "title": "Latency data quality: $latency_metric $concurrency clients",
+          "transformations": [
+            {
+              "id": "calculateField",
+              "options": {
+                "alias": "CV",
+                "binary": {
+                  "left": "Std Dev",
+                  "operator": "/",
+                  "reducer": "sum",
+                  "right": "Average"
+                },
+                "mode": "binary",
+                "reduce": {
+                  "reducer": "sum"
+                },
+                "replaceFields": false
+              }
+            }
+          ],
+          "type": "gauge"
+        },
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "${DS_AWS_DEV - INGRESS PERFORMANCE - NEW}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto",
+                "filterable": true,
+                "inspect": true,
+                "minWidth": 0
+              },
+              "decimals": 0,
+              "mappings": [],
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Samples"
+                },
+                "properties": [
+                  {
+                    "id": "decimals",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Avg Lat"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "µs"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Concurrency"
+                },
+                "properties": [
+                  {
+                    "id": "decimals",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Duration"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "ns"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Max Lat"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "ns"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "P90 Lat"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "ns"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "P95 Lat"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "ns"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "P99 Lat"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "ns"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Avg RPS "
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "reqps"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Requests"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "none"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 19
+          },
+          "id": 6,
+          "options": {
+            "footer": {
+              "enablePagination": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": []
+          },
+          "pluginVersion": "9.3.2",
+          "targets": [
+            {
+              "alias": "",
+              "bucketAggs": [],
+              "datasource": {
+                "type": "elasticsearch",
+                "uid": "${DS_AWS_DEV - INGRESS PERFORMANCE - NEW}"
+              },
+              "metrics": [
+                {
+                  "id": "1",
+                  "settings": {
+                    "size": "500"
+                  },
+                  "type": "raw_data"
+                }
+              ],
+              "query": "uuid.keyword: $uuid AND config.termination.keyword: $termination",
+              "refId": "A",
+              "timeField": "timestamp"
+            }
+          ],
+          "title": "$termination raw data",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "_id": true,
+                  "_index": true,
+                  "_type": true,
+                  "clusterName": true,
+                  "config.samples": true,
+                  "config.termination": true,
+                  "config.tool": true,
+                  "highlight": true,
+                  "infraNodesCount": true,
+                  "infraNodesType": true,
+                  "k8sVersion": true,
+                  "masterNodesCount": true,
+                  "masterNodesType": true,
+                  "metricName": true,
+                  "ocpVersion": true,
+                  "platform": true,
+                  "pods": true,
+                  "region": true,
+                  "requests": true,
+                  "rps_stdev": true,
+                  "sort": true,
+                  "stdev_lat": true,
+                  "timeouts": false,
+                  "timestamp": true,
+                  "tool": true,
+                  "totalNodes": true,
+                  "workerNodesCount": true,
+                  "workerNodesType": true
+                },
+                "indexByName": {
+                  "_id": 5,
+                  "_index": 6,
+                  "_type": 7,
+                  "avg_lat_us": 18,
+                  "config.concurrency": 8,
+                  "config.connections": 9,
+                  "config.duration": 10,
+                  "config.path": 1,
+                  "config.samples": 11,
+                  "config.serverReplicas": 12,
+                  "config.termination": 2,
+                  "config.tool": 13,
+                  "config.tuning.routers": 14,
+                  "config.tuning.threadCount": 15,
+                  "highlight": 16,
+                  "max_lat_us": 19,
+                  "p90_lat_us": 20,
+                  "p95_lat_us": 21,
+                  "p99_lat_us": 22,
+                  "pods": 23,
+                  "rps_stdev": 24,
+                  "sample": 3,
+                  "sort": 25,
+                  "stdev_lat": 26,
+                  "timestamp": 4,
+                  "total_avg_rps": 17,
+                  "uuid": 0
+                },
+                "renameByName": {
+                  "avg_lat_us": "Avg Lat",
+                  "config.concurrency": "Concurrency",
+                  "config.connections": "Connections",
+                  "config.duration": "Duration",
+                  "config.path": "Path",
+                  "config.samples": "Samples",
+                  "config.serverReplicas": "Servers",
+                  "config.termination": "Termination",
+                  "config.tuning.routers": "Routers",
+                  "config.tuning.threadCount": "Threads",
+                  "config.tuningPatch": "Tuning",
+                  "http_errors": "Errors",
+                  "max_lat_us": "Max Lat",
+                  "p90_lat_us": "P90 Lat",
+                  "p95_lat_us": "P95 Lat",
+                  "p99_lat_us": "P99 Lat",
+                  "pods": "",
+                  "requests": "Requests",
+                  "rps_stdev": "",
+                  "sample": "# Sample",
+                  "stdev_lat": "",
+                  "timeouts": "Timeouts",
+                  "total_avg_rps": "Avg RPS ",
+                  "uuid": "UUID"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        }
+      ],
+      "repeat": "termination",
+      "repeatDirection": "h",
+      "title": "$termination",
+      "type": "row"
+    }
+  ],
+  "schemaVersion": 37,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": [
+            "AWS Dev - Ingress performance - new"
+          ],
+          "value": [
+            "AWS Dev - Ingress performance - new"
+          ]
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Datasource",
+        "multi": true,
+        "name": "datasource",
+        "options": [],
+        "query": "elasticsearch",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "/.*Ingress.*/",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "${DS_AWS_DEV - INGRESS PERFORMANCE - NEW}"
+        },
+        "definition": "{\"find\": \"terms\", \"field\": \"uuid.keyword\"}",
+        "hide": 0,
+        "includeAll": true,
+        "label": "UUID",
+        "multi": true,
+        "name": "uuid",
+        "options": [],
+        "query": "{\"find\": \"terms\", \"field\": \"uuid.keyword\"}",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "${DS_AWS_DEV - INGRESS PERFORMANCE - NEW}"
+        },
+        "definition": "{\"find\": \"terms\", \"field\": \"config.termination.keyword\"}",
+        "description": "",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Termination",
+        "multi": true,
+        "name": "termination",
+        "options": [],
+        "query": "{\"find\": \"terms\", \"field\": \"config.termination.keyword\"}",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "p99_lat_us",
+          "value": "p99_lat_us"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Latency",
+        "multi": false,
+        "name": "latency_metric",
+        "options": [
+          {
+            "selected": false,
+            "text": "avg_lat_us",
+            "value": "avg_lat_us"
+          },
+          {
+            "selected": false,
+            "text": "max_lat_us",
+            "value": "max_lat_us"
+          },
+          {
+            "selected": false,
+            "text": "p90_lat_us",
+            "value": "p90_lat_us"
+          },
+          {
+            "selected": false,
+            "text": "p95_lat_us",
+            "value": "p95_lat_us"
+          },
+          {
+            "selected": true,
+            "text": "p99_lat_us",
+            "value": "p99_lat_us"
+          }
+        ],
+        "query": "avg_lat_us,max_lat_us,p90_lat_us,p95_lat_us,p99_lat_us",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "uuid.keyword",
+          "value": "uuid.keyword"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Compare By",
+        "multi": false,
+        "name": "compare_by",
+        "options": [
+          {
+            "selected": true,
+            "text": "uuid.keyword",
+            "value": "uuid.keyword"
+          },
+          {
+            "selected": false,
+            "text": "config.connections",
+            "value": "config.connections"
+          },
+          {
+            "selected": false,
+            "text": "config.path.keyword",
+            "value": "config.path.keyword"
+          }
+        ],
+        "query": "uuid.keyword,config.connections,config.path.keyword",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "${DS_AWS_DEV - INGRESS PERFORMANCE - NEW}"
+        },
+        "definition": "{\"find\": \"terms\", \"field\": \"config.concurrency\", \"query\": \"uuid.keyword: $uuid\"}",
+        "description": "",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Concurrency",
+        "multi": true,
+        "name": "concurrency",
+        "options": [],
+        "query": "{\"find\": \"terms\", \"field\": \"config.concurrency\", \"query\": \"uuid.keyword: $uuid\"}",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Ingress Performance refactor",
+  "uid": "nlAhmRyVk",
+  "version": 66,
+  "weekStart": ""
+}
