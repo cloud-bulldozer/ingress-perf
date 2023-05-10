@@ -41,6 +41,10 @@ var workerAffinity = &corev1.Affinity{
 							Key:      "node-role.kubernetes.io/worker",
 							Operator: corev1.NodeSelectorOpExists,
 						},
+						{
+							Key:      "node-role.kubernetes.io/infra",
+							Operator: corev1.NodeSelectorOpDoesNotExist,
+						},
 					},
 				},
 			},
