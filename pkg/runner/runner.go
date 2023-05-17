@@ -43,6 +43,8 @@ func Start(uuid string, indexer *indexers.Indexer) error {
 	if err != nil {
 		return err
 	}
+	restConfig.QPS = 50
+	restConfig.Burst = 50
 	clientSet = kubernetes.NewForConfigOrDie(restConfig)
 	orClientSet = openshiftrouteclientset.NewForConfigOrDie(restConfig)
 	dynamicClient = dynamic.NewForConfigOrDie(restConfig)
