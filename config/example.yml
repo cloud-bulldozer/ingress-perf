@@ -1,33 +1,93 @@
+# Throughput benchmark
+# RPS benchmark
+
 - termination: http
-  connections: 100
+  connections: 20
+  samples: 1
+  duration: 1m
+  path: /1024.html
+  concurrency: 1
+  tool: wrk
+  serverReplicas: 90
+  warmup: true
+
+- termination: http
+  connections: 200
   samples: 2
-  duration: 1m
-  path: /256.html
-  concurrency: 25
+  duration: 2m
+  path: /1024.html
+  concurrency: 1
   tool: wrk
-  serverReplicas: 10
-  tuningPatch: '{"spec":{"nodePlacement": {"nodeSelector": {"matchLabels": {"node-role.kubernetes.io/infra": ""}}}, "replicas": 2, "tuningOptions": {"threadCount": 16}}}'
-- termination: reencrypt
-  connections: 100
-  duration: 1m
-  path: /256.html
-  concurrency: 25
-  tool: wrk
-  serverReplicas: 10
+  serverReplicas: 90
+  delay: 10s
+
 - termination: edge
-  connections: 100
+  connections: 200
   samples: 2
-  duration: 1m
-  path: /256.html
-  concurrency: 25
+  duration: 2m
+  path: /1024.html
+  concurrency: 1
   tool: wrk
-  serverReplicas: 10
-  tuning:
+  serverReplicas: 90
+  delay: 10s
+
+- termination: reencrypt
+  connections: 200
+  samples: 2
+  duration: 2m
+  path: /1024.html
+  concurrency: 1
+  tool: wrk
+  serverReplicas: 90
+  delay: 10s
+
 - termination: passthrough
-  connections: 100
+  connections: 200
   samples: 2
-  duration: 1m
-  path: /256.html
-  concurrency: 25
+  duration: 2m
+  path: /1024.html
+  concurrency: 1
   tool: wrk
-  serverReplicas: 10
+  serverReplicas: 90
+  delay: 10s
+
+- termination: http
+  connections: 200
+  samples: 2
+  duration: 2m
+  path: /1024.html
+  concurrency: 20
+  tool: wrk
+  serverReplicas: 90
+  delay: 10s
+
+- termination: edge
+  connections: 200
+  samples: 2
+  duration: 2m
+  path: /1024.html
+  concurrency: 20
+  tool: wrk
+  serverReplicas: 90
+  delay: 10s
+
+- termination: reencrypt
+  connections: 200
+  samples: 2
+  duration: 2m
+  path: /1024.html
+  concurrency: 20
+  tool: wrk
+  serverReplicas: 90
+  delay: 10s
+
+- termination: passthrough
+  connections: 200
+  samples: 2
+  duration: 2m
+  path: /1024.html
+  concurrency: 20
+  tool: wrk
+  serverReplicas: 90
+  delay: 10s
+
