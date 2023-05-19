@@ -28,6 +28,6 @@ func (w *wrk) Cmd() []string {
 	return w.cmd
 }
 
-func (w *wrk) ParseResult(stdout, stderr string) (PodResult, error) {
+func (w *wrk) ParseResult(_, stderr string) (PodResult, error) {
 	return w.res, json.Unmarshal([]byte(stderr), &w.res)
 }

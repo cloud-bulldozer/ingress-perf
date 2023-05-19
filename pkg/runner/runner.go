@@ -155,18 +155,12 @@ func reconcileNs(cfg config.Config) error {
 		if err != nil {
 			return err
 		}
-		if err := waitForDeployment(benchmarkNs, deployment.Name, time.Minute); err != nil {
-			return err
-		}
-		return nil
+		return waitForDeployment(benchmarkNs, deployment.Name, time.Minute)
 	}
 	if err := f(server, cfg.ServerReplicas); err != nil {
 		return err
 	}
-	if err := f(client, cfg.Concurrency); err != nil {
-		return err
-	}
-	return nil
+	return f(client, cfg.Concurrency)
 }
 
 func waitForDeployment(ns, deployment string, maxWaitTimeout time.Duration) error {

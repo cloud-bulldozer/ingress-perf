@@ -9,7 +9,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 )
@@ -23,12 +22,6 @@ const (
 	clientName  = "ingress-perf-client"
 	waitPeriod  = 10 * time.Second
 )
-
-var routeGVR = schema.GroupVersionResource{
-	Group:    "route.openshift.io",
-	Version:  "v1",
-	Resource: "routes",
-}
 
 var workerAffinity = &corev1.Affinity{
 	NodeAffinity: &corev1.NodeAffinity{
@@ -159,19 +152,6 @@ var clientCRB = rbac.ClusterRoleBinding{
 		APIGroup: "rbac.authorization.k8s.io",
 		Name:     "system:openshift:scc:hostnetwork-v2",
 		Kind:     "ClusterRole",
-	},
-}
-
-var baseRoute = routev1.Route{
-	ObjectMeta: metav1.ObjectMeta{
-		Namespace: benchmarkNs,
-		Name:      serverName,
-	},
-	Spec: routev1.RouteSpec{
-		Port: &routev1.RoutePort{TargetPort: intstr.FromString("https")},
-		To: routev1.RouteTargetReference{
-			Name: service.Name,
-		},
 	},
 }
 
