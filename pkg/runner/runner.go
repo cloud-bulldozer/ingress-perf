@@ -8,7 +8,7 @@ import (
 
 	"github.com/cloud-bulldozer/go-commons/indexers"
 	ocpmetadata "github.com/cloud-bulldozer/go-commons/ocp-metadata"
-	"github.com/rsevilla87/ingress-perf/pkg/config"
+	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"

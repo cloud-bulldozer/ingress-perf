@@ -3,7 +3,7 @@ package tools
 import (
 	"fmt"
 
-	"github.com/rsevilla87/ingress-perf/pkg/config"
+	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
 )
 
 var toolMap = make(map[string]func(config.Config, string) Tool)

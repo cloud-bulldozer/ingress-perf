@@ -4,7 +4,7 @@ import (
 	"time"
 
 	ocpmetadata "github.com/cloud-bulldozer/go-commons/ocp-metadata"
-	"github.com/rsevilla87/ingress-perf/pkg/config"
+	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
 )
 
 type Tool interface {

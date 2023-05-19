@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/rsevilla87/ingress-perf/pkg/config"
+	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
 )
 
 type wrk struct {

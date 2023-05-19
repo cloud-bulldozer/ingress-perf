@@ -1,4 +1,4 @@
-module github.com/rsevilla87/ingress-perf
+module github.com/cloud-bulldozer/ingress-perf
 
 go 1.19
 

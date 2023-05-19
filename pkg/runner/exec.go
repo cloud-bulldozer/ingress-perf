@@ -8,8 +8,8 @@ import (
 	"time"
 
 	ocpmetadata "github.com/cloud-bulldozer/go-commons/ocp-metadata"
-	"github.com/rsevilla87/ingress-perf/pkg/config"
-	"github.com/rsevilla87/ingress-perf/pkg/runner/tools"
+	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
+	"github.com/cloud-bulldozer/ingress-perf/pkg/runner/tools"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

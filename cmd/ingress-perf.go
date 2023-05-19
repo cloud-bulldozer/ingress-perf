@@ -4,9 +4,9 @@ import (
 	"time"
 
 	"github.com/cloud-bulldozer/go-commons/indexers"
-	"github.com/rsevilla87/ingress-perf/pkg/config"
-	_ "github.com/rsevilla87/ingress-perf/pkg/log"
-	"github.com/rsevilla87/ingress-perf/pkg/runner"
+	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
+	_ "github.com/cloud-bulldozer/ingress-perf/pkg/log"
+	"github.com/cloud-bulldozer/ingress-perf/pkg/runner"
 	uid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
