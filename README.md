@@ -22,6 +22,10 @@ Ingress-perf configuration is defined in a YAML file, holding an array of the fo
 | `Delay`          | `time.Duration`  | Defines a delay between samples.                                                                         | `0s`          |
 | `Warmup`         | `bool`           | Enables warmup: indexing will be disabled in this scenario. The default value is `false`.               | `false`       |
 
+## Supported tools
+
+- wrk: HTTP benchmarking tool. https://github.com/wg/wrk
+
 ## Running
 
 Running ingress-perf is trivial:
