@@ -1,6 +1,6 @@
-# Throughput benchmark
-# RPS benchmark
+# vim: expandtab shiftwidth=2 softtabstop=2
 
+# First sample is set as warmup and also will tune the default ingress-controller to place the routers on infra nodes
 - termination: http
   connections: 20
   samples: 1
@@ -91,4 +91,5 @@
   tool: wrk
   serverReplicas: 90
   delay: 10s
+
 
