@@ -34,8 +34,8 @@ import (
 
 var lock = &sync.Mutex{}
 
-func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata) ([]interface{}, error) {
-	var benchmarkResult []interface{}
+func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata) ([]tools.Result, error) {
+	var benchmarkResult []tools.Result
 	var clientPods []corev1.Pod
 	var wg sync.WaitGroup
 	var ep string

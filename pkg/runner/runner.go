@@ -16,13 +16,17 @@ package runner
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/cloud-bulldozer/go-commons/comparison"
 	"github.com/cloud-bulldozer/go-commons/indexers"
+
 	ocpmetadata "github.com/cloud-bulldozer/go-commons/ocp-metadata"
 	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
+	"github.com/cloud-bulldozer/ingress-perf/pkg/runner/tools"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -43,10 +47,12 @@ var clientSet *kubernetes.Clientset
 var dynamicClient *dynamic.DynamicClient
 var orClientSet *openshiftrouteclientset.Clientset
 
-func Start(uuid string, indexer *indexers.Indexer) error {
+func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.Indexer) error {
 	var err error
-	var result []interface{}
 	var kubeconfig string
+	var benchmarkResult []tools.Result
+	var comparator comparison.Comparator
+	passed := true
 	log.Info("Starting ingress-perf")
 	if os.Getenv("KUBECONFIG") != "" {
 		kubeconfig = os.Getenv("KUBECONFIG")
@@ -70,6 +76,9 @@ func Start(uuid string, indexer *indexers.Indexer) error {
 	if err != nil {
 		return err
 	}
+	if indexer != nil {
+		comparator = comparison.NewComparator(*indexers.ESClient, baseIndex)
+	}
 	if err := deployAssets(); err != nil {
 		return err
 	}
@@ -84,22 +93,47 @@ func Start(uuid string, indexer *indexers.Indexer) error {
 				return err
 			}
 		}
-		if result, err = runBenchmark(cfg, clusterMetadata); err != nil {
+		if benchmarkResult, err = runBenchmark(cfg, clusterMetadata); err != nil {
 			return err
 		}
 		if indexer != nil {
 			if !cfg.Warmup {
-				msg, err := (*indexer).Index(result, indexers.IndexingOpts{})
+				benchmarkResultDocuments := make([]interface{}, len(benchmarkResult))
+				for _, res := range benchmarkResult {
+					benchmarkResultDocuments = append(benchmarkResultDocuments, res)
+				}
+				msg, err := (*indexer).Index(benchmarkResultDocuments, indexers.IndexingOpts{})
 				if err != nil {
 					return err
 				}
 				log.Info(msg)
+				if baseUUID != "" {
+					log.Infof("Comparing total_avg_rps with baseline: %v in index %s", baseUUID, baseIndex)
+					var totalAvgRps float64
+					query := fmt.Sprintf("uuid.keyword: %s AND config.termination.keyword: %s AND config.concurrency: %d AND config.connections: %d AND config.serverReplicas: %d AND config.path.keyword: \\%s",
+						baseUUID, cfg.Termination, cfg.Concurrency, cfg.Connections, cfg.ServerReplicas, cfg.Path)
+					log.Debugf("Query: %s", query)
+					for _, b := range benchmarkResult {
+						totalAvgRps += b.TotalAvgRps
+					}
+					totalAvgRps = totalAvgRps / float64(len(benchmarkResult))
+					msg, err := comparator.Compare("total_avg_rps", query, comparison.Avg, totalAvgRps, tolerancy)
+					if err != nil {
+						log.Error(err.Error())
+						passed = false
+					} else {
+						log.Info(msg)
+					}
+				}
 			} else {
 				log.Info("Warmup is enabled, skipping indexing")
 			}
 		}
 	}
-	return nil
+	if passed {
+		return nil
+	}
+	return fmt.Errorf("some benchmark comparisons failed")
 }
 
 func Cleanup(timeout time.Duration) error {

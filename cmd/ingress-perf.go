@@ -15,6 +15,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/cloud-bulldozer/go-commons/indexers"
@@ -32,8 +33,9 @@ var cmd = &cobra.Command{
 }
 
 func run() *cobra.Command {
-	var cfg, uuid, esServer, esIndex, logLevel string
+	var cfg, uuid, baseUUID, esServer, esIndex, logLevel, baseIndex string
 	var cleanup bool
+	var tolerancy int
 	cmd := &cobra.Command{
 		Use:           "run",
 		Short:         "Run benchmark",
@@ -54,6 +56,9 @@ func run() *cobra.Command {
 			if err := config.Load(cfg); err != nil {
 				return err
 			}
+			if baseUUID != "" && (tolerancy > 100 || tolerancy < 1) {
+				return fmt.Errorf("tolerancy is an integer between 1 and 100")
+			}
 			if esServer != "" {
 				log.Infof("Creating %s indexer", indexers.ElasticIndexer)
 				indexerCfg := indexers.IndexerConfig{
@@ -66,7 +71,7 @@ func run() *cobra.Command {
 					return err
 				}
 			}
-			if err = runner.Start(uuid, indexer); err != nil {
+			if err = runner.Start(uuid, baseUUID, baseIndex, tolerancy, indexer); err != nil {
 				return err
 			}
 			if cleanup {
@@ -77,8 +82,11 @@ func run() *cobra.Command {
 	}
 	cmd.Flags().StringVarP(&cfg, "cfg", "c", "", "Configuration file")
 	cmd.Flags().StringVar(&uuid, "uuid", uid.NewV4().String(), "Benchmark uuid")
+	cmd.Flags().StringVar(&baseUUID, "baseline-uuid", "", "Baseline uuid to compare the results with")
+	cmd.Flags().StringVar(&baseIndex, "baseline-index", "ingress-performance", "Baseline Elasticsearch index")
+	cmd.Flags().IntVar(&tolerancy, "tolerancy", 20, "Comparison tolerancy, must be an integer between 1 and 100")
 	cmd.Flags().StringVar(&esServer, "es-server", "", "Elastic Search endpoint")
-	cmd.Flags().StringVar(&esIndex, "es-index", "ingress-performance", "Elastic Search index")
+	cmd.Flags().StringVar(&esIndex, "es-index", "ingress-performance", "Elasticsearch index")
 	cmd.Flags().BoolVar(&cleanup, "cleanup", true, "Cleanup benchmark assets")
 	cmd.Flags().StringVar(&logLevel, "loglevel", "info", "Log level. Allowed levels are error, info and debug")
 	cmd.MarkFlagRequired("cfg")
