@@ -47,7 +47,7 @@ var clientSet *kubernetes.Clientset
 var dynamicClient *dynamic.DynamicClient
 var orClientSet *openshiftrouteclientset.Clientset
 
-func Start(uuid, baseUuid, baseIndex string, tolerancy int, indexer *indexers.Indexer) error {
+func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.Indexer) error {
 	var err error
 	var kubeconfig string
 	var benchmarkResult []tools.Result
@@ -107,11 +107,11 @@ func Start(uuid, baseUuid, baseIndex string, tolerancy int, indexer *indexers.In
 					return err
 				}
 				log.Info(msg)
-				if baseUuid != "" {
-					log.Infof("Comparing total_avg_rps with baseline: %v in index %s", baseUuid, baseIndex)
-					var totalAvgRps float64 = 0
+				if baseUUID != "" {
+					log.Infof("Comparing total_avg_rps with baseline: %v in index %s", baseUUID, baseIndex)
+					var totalAvgRps float64
 					query := fmt.Sprintf("uuid.keyword: %s AND config.termination.keyword: %s AND config.concurrency: %d AND config.connections: %d AND config.serverReplicas: %d AND config.path.keyword: \\%s",
-						baseUuid, cfg.Termination, cfg.Concurrency, cfg.Connections, cfg.ServerReplicas, cfg.Path)
+						baseUUID, cfg.Termination, cfg.Concurrency, cfg.Connections, cfg.ServerReplicas, cfg.Path)
 					log.Debugf("Query: %s", query)
 					for _, b := range benchmarkResult {
 						totalAvgRps += b.TotalAvgRps
@@ -132,9 +132,8 @@ func Start(uuid, baseUuid, baseIndex string, tolerancy int, indexer *indexers.In
 	}
 	if passed {
 		return nil
-	} else {
-		return fmt.Errorf("some comparisons failed")
 	}
+	return fmt.Errorf("some benchmark comparisons failed")
 }
 
 func Cleanup(timeout time.Duration) error {

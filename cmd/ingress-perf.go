@@ -33,7 +33,7 @@ var cmd = &cobra.Command{
 }
 
 func run() *cobra.Command {
-	var cfg, uuid, baseUuid, esServer, esIndex, logLevel, baseIndex string
+	var cfg, uuid, baseUUID, esServer, esIndex, logLevel, baseIndex string
 	var cleanup bool
 	var tolerancy int
 	cmd := &cobra.Command{
@@ -56,7 +56,7 @@ func run() *cobra.Command {
 			if err := config.Load(cfg); err != nil {
 				return err
 			}
-			if baseUuid != "" && (tolerancy > 100 || tolerancy < 1) {
+			if baseUUID != "" && (tolerancy > 100 || tolerancy < 1) {
 				return fmt.Errorf("tolerancy is an integer between 1 and 100")
 			}
 			if esServer != "" {
@@ -71,7 +71,7 @@ func run() *cobra.Command {
 					return err
 				}
 			}
-			if err = runner.Start(uuid, baseUuid, baseIndex, tolerancy, indexer); err != nil {
+			if err = runner.Start(uuid, baseUUID, baseIndex, tolerancy, indexer); err != nil {
 				return err
 			}
 			if cleanup {
@@ -82,7 +82,7 @@ func run() *cobra.Command {
 	}
 	cmd.Flags().StringVarP(&cfg, "cfg", "c", "", "Configuration file")
 	cmd.Flags().StringVar(&uuid, "uuid", uid.NewV4().String(), "Benchmark uuid")
-	cmd.Flags().StringVar(&baseUuid, "baseline-uuid", "", "Baseline uuid to compare the results with")
+	cmd.Flags().StringVar(&baseUUID, "baseline-uuid", "", "Baseline uuid to compare the results with")
 	cmd.Flags().StringVar(&baseIndex, "baseline-index", "ingress-performance", "Baseline Elasticsearch index")
 	cmd.Flags().IntVar(&tolerancy, "tolerancy", 20, "Comparison tolerancy, must be an integer between 1 and 100")
 	cmd.Flags().StringVar(&esServer, "es-server", "", "Elastic Search endpoint")
