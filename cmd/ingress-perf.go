@@ -16,7 +16,6 @@ package main
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/cloud-bulldozer/go-commons/indexers"
 	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
@@ -71,13 +70,7 @@ func run() *cobra.Command {
 					return err
 				}
 			}
-			if err = runner.Start(uuid, baseUUID, baseIndex, tolerancy, indexer); err != nil {
-				return err
-			}
-			if cleanup {
-				err = runner.Cleanup(10 * time.Minute)
-			}
-			return err
+			return runner.Start(uuid, baseUUID, baseIndex, tolerancy, indexer, cleanup)
 		},
 	}
 	cmd.Flags().StringVarP(&cfg, "cfg", "c", "", "Configuration file")
