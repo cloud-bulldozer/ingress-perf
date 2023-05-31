@@ -84,7 +84,12 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 	}
 	for i, cfg := range config.Cfg {
 		cfg.UUID = uuid
-		log.Infof("Running test %d/%d: %v", i+1, len(config.Cfg), cfg.Termination)
+		log.Infof("Running test %d/%d - termination:%v servers:%d concurrency:%d duration:%v", i+1, len(config.Cfg),
+			cfg.Termination,
+			cfg.ServerReplicas,
+			cfg.Concurrency,
+			cfg.Duration,
+		)
 		if err := reconcileNs(cfg); err != nil {
 			return err
 		}
