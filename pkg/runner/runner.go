@@ -47,7 +47,7 @@ var clientSet *kubernetes.Clientset
 var dynamicClient *dynamic.DynamicClient
 var orClientSet *openshiftrouteclientset.Clientset
 
-func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.Indexer) error {
+func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.Indexer, cleanupAssets bool) error {
 	var err error
 	var kubeconfig string
 	var benchmarkResult []tools.Result
@@ -130,13 +130,18 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 			}
 		}
 	}
+	if cleanupAssets {
+		if cleanup(10*time.Minute) != nil {
+			return err
+		}
+	}
 	if passed {
 		return nil
 	}
 	return fmt.Errorf("some benchmark comparisons failed")
 }
 
-func Cleanup(timeout time.Duration) error {
+func cleanup(timeout time.Duration) error {
 	log.Info("Cleaning up resources")
 	if err := clientSet.CoreV1().Namespaces().Delete(context.TODO(), benchmarkNs, metav1.DeleteOptions{}); err != nil {
 		return err
