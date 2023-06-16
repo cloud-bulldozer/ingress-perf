@@ -68,12 +68,13 @@ func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata
 			break
 		}
 	}
+	ts := time.Now().UTC()
 	for i := 1; i <= cfg.Samples; i++ {
 		result := tools.Result{
 			UUID:            cfg.UUID,
 			Sample:          i,
 			Config:          cfg,
-			Timestamp:       time.Now().UTC(),
+			Timestamp:       ts,
 			ClusterMetadata: clusterMetadata,
 		}
 		log.Infof("Running sample %d/%d: %v", i, cfg.Samples, cfg.Duration)
