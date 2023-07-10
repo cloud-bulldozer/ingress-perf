@@ -6,7 +6,7 @@ OCP Ingress performance ultimate tool!
 
 ## Reference
 
-Ingress-perf configuration is defined in a YAML file, holding an array of the following structure. [Examples directory](./examples)
+Ingress-perf configuration is defined in a YAML file, holding an array of the following structure. [Examples directory](./config)
 
 | Field Name       | Type             | Description                                                                                              | Default Value |
 |------------------|------------------|----------------------------------------------------------------------------------------------------------|---------------|
