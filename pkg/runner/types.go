@@ -16,7 +16,6 @@ package runner
 
 import (
 	"fmt"
-	"time"
 
 	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -35,7 +34,6 @@ const (
 	//clientImage = "quay.io/cloud-bulldozer/ingress-toolbox:latest"
 	clientImage = "quay.io/cloud-bulldozer/wrk:latest"
 	clientName  = "ingress-perf-client"
-	waitPeriod  = 10 * time.Second
 )
 
 var workerAffinity = &corev1.Affinity{

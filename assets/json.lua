@@ -27,5 +27,6 @@ done = function(summary, latency, requests)
 	  end
    end
    io.stderr:write("}\n")
+   io.stderr:flush()
 end
 
