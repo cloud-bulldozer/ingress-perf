@@ -9,6 +9,7 @@
   concurrency: 1
   tool: wrk
   serverReplicas: 90
+  requestTimeout: 2s
   tuningPatch: '{"spec":{"nodePlacement": {"nodeSelector": {"matchLabels": {"node-role.kubernetes.io/infra": ""}}}, "replicas": 2}}'
   warmup: true
 

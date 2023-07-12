@@ -10,17 +10,18 @@ Ingress-perf configuration is defined in a YAML file, holding an array of the fo
 
 | Field Name       | Type             | Description                                                                                              | Default Value |
 |------------------|------------------|----------------------------------------------------------------------------------------------------------|---------------|
-| `Termination`    | `string`         | Defines the type of benchmark termination. Allowed values are `http`, `edge`, `reencrypt` and `reencrypt`. | N/A           |
-| `Connections`    | `int`            | Defines the number of connections per client.                                                            | `0`           |
-| `Samples`        | `int`            | Defines the number of samples per scenario.                                                              | `0`           |
-| `Duration`       | `time.Duration`  | Defines the duration of each sample.                                                                     | `""`          |
-| `Path`           | `string`         | Defines the scenario endpoint path, for example: `/1024.html`, `/2048.html`.                              | `""`          |
-| `Concurrency`    | `int32`          | Defines the number of clients that will concurrently run the benchmark scenario.                        | `0`           |
-| `Tool`           | `string`         | Defines the tool to run the benchmark scenario.                                                         | `""`          |
-| `ServerReplicas` | `int32`          | Defines the number of server (nginx) replicas backed by the routes.                                      | `0`           |
-| `Tuning`         | `string`         | Defines a tuning patch for the default `IngressController` object.                                       | `""`          |
-| `Delay`          | `time.Duration`  | Defines a delay between samples.                                                                         | `0s`          |
-| `Warmup`         | `bool`           | Enables warmup: indexing will be disabled in this scenario. The default value is `false`.               | `false`       |
+| `termination`    | `string`         | Defines the type of benchmark termination. Allowed values are `http`, `edge`, `reencrypt` and `reencrypt`. | N/A           |
+| `connections`    | `int`            | Defines the number of connections per client.                                                            | `0`           |
+| `samples`        | `int`            | Defines the number of samples per scenario.                                                              | `0`           |
+| `duration`       | `time.Duration`  | Defines the duration of each sample.                                                                     | `""`          |
+| `path`           | `string`         | Defines the scenario endpoint path, for example: `/1024.html`, `/2048.html`.                              | `""`          |
+| `concurrency`    | `int32`          | Defines the number of clients that will concurrently run the benchmark scenario.                        | `0`           |
+| `tool`           | `string`         | Defines the tool to run the benchmark scenario.                                                         | `""`          |
+| `serverReplicas` | `int32`          | Defines the number of server (nginx) replicas backed by the routes.                                      | `0`           |
+| `tuningPatch`    | `string`         | Defines a JSON merge tuning patch for the default `IngressController` object.                            | `""`          |
+| `delay`          | `time.Duration`  | Defines a delay between samples.                                                                         | `0s`          |
+| `warmup`         | `bool`           | Enables warmup: indexing will be disabled in this scenario.                                              | `false`       |
+| `requestTimeout` | `time.Duration`  | Request timeout                                                                                          | `1s`       |
 
 ## Supported tools
 
