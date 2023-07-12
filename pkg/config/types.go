@@ -42,4 +42,6 @@ type Config struct {
 	Delay time.Duration `yaml:"delay"`
 	// Warmup enables warmup: Indexing will be disabled in this scenario. Default is false
 	Warmup bool `yaml:"warmup" json:"-"`
+	// RequestTimeout defines the tool request timeout
+	RequestTimeout time.Duration `yaml:"requestTimeout"`
 }

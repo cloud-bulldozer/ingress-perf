@@ -16,6 +16,7 @@ package config
 
 import (
 	"os"
+	"time"
 
 	yaml "gopkg.in/yaml.v3"
 )
@@ -24,7 +25,8 @@ import (
 func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type ConfigDefaulted Config
 	defaultCfg := ConfigDefaulted{
-		Warmup: false, // Disable warmup by default
+		Warmup:         false, // Disable warmup by default
+		RequestTimeout: time.Second,
 	}
 	if err := unmarshal(&defaultCfg); err != nil {
 		return err
