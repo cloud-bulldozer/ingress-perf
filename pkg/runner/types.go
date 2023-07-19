@@ -213,6 +213,11 @@ var routes = []routev1.Route{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: benchmarkNs,
 			Name:      fmt.Sprintf("%s-passthrough", serverName),
+			Annotations: map[string]string{
+				// Passthrough terminations default balance strategy is source, this strategy is not suitable for
+				// performance testing when concurrency is higher than 1, as all the requests will use the same source IP
+				"haproxy.router.openshift.io/balance": "random",
+			},
 		},
 		Spec: routev1.RouteSpec{
 			Port: &routev1.RoutePort{TargetPort: intstr.FromString("https")},
