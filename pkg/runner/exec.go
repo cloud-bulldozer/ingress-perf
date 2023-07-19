@@ -77,6 +77,7 @@ func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata
 			Timestamp:       ts,
 			ClusterMetadata: clusterMetadata,
 		}
+		result.Config.Tuning = currentTuning // It's usefult to index the current tunning configuration in the all benchmark's documents
 		log.Infof("Running sample %d/%d: %v", i, cfg.Samples, cfg.Duration)
 		for _, pod := range clientPods {
 			wg.Add(1)

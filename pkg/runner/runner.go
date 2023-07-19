@@ -46,6 +46,7 @@ var restConfig *rest.Config
 var clientSet *kubernetes.Clientset
 var dynamicClient *dynamic.DynamicClient
 var orClientSet *openshiftrouteclientset.Clientset
+var currentTuning string
 
 func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.Indexer, cleanupAssets bool) error {
 	var err error
@@ -97,7 +98,8 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 			return err
 		}
 		if cfg.Tuning != "" {
-			if err = ApplyTunning(cfg.Tuning); err != nil {
+			currentTuning = cfg.Tuning
+			if err = applyTunning(cfg.Tuning); err != nil {
 				return err
 			}
 		}
