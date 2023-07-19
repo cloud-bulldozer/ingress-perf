@@ -30,8 +30,10 @@ type Config struct {
 	Duration time.Duration `yaml:"duration" json:"duration"`
 	// Path scenario endpoint. i.e: 1024.html, 2048.html
 	Path string `yaml:"path" json:"path"`
-	// Concurrency defined the number of clients
+	// Concurrency defines the number of clients
 	Concurrency int32 `yaml:"concurrency" json:"concurrency"`
+	// Procs processes per client pod
+	Procs int `yaml:"procs" json:"procs"`
 	// Tool defines the tool to run the benchmark scenario
 	Tool string `yaml:"tool" json:"tool"`
 	// ServerReplicas number of server (nginx) replicas backed by the routes. Example: wrk

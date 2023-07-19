@@ -79,8 +79,10 @@ func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata
 		}
 		log.Infof("Running sample %d/%d: %v", i, cfg.Samples, cfg.Duration)
 		for _, pod := range clientPods {
-			wg.Add(1)
-			go exec(context.TODO(), &wg, tool, pod, &result)
+			for i := 0; i < cfg.Procs; i++ {
+				wg.Add(1)
+				go exec(context.TODO(), &wg, tool, pod, &result)
+			}
 		}
 		wg.Wait()
 		genResultSummary(&result)
@@ -162,10 +164,11 @@ func genResultSummary(result *tools.Result) {
 		result.P95Latency += float64(pod.P95Latency)
 		result.P99Latency += float64(pod.P99Latency)
 	}
-	result.StdevRps = result.StdevRps / float64(len(result.Pods))
-	result.AvgLatency = result.AvgLatency / float64(len(result.Pods))
-	result.StdevLatency = result.StdevLatency / float64(len(result.Pods))
-	result.P90Latency = result.P90Latency / float64(len(result.Pods))
-	result.P95Latency = result.P95Latency / float64(len(result.Pods))
-	result.P99Latency = result.P99Latency / float64(len(result.Pods))
+	pods := float64(len(result.Pods))
+	result.StdevRps = result.StdevRps / pods
+	result.AvgLatency = result.AvgLatency / pods
+	result.StdevLatency = result.StdevLatency / pods
+	result.P90Latency = result.P90Latency / pods
+	result.P95Latency = result.P95Latency / pods
+	result.P99Latency = result.P99Latency / pods
 }
