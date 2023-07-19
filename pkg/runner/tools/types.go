@@ -38,7 +38,9 @@ type PodResult struct {
 	P90Latency   int64   `json:"p90_lat_us"`
 	P95Latency   int64   `json:"p95_lat_us"`
 	P99Latency   int64   `json:"p99_lat_us"`
-	Errors       int64   `json:"http_errors"`
+	HTTPErrors   int64   `json:"http_errors"`
+	ReadErrors   int64   `json:"read_errors"`
+	WriteErrors  int64   `json:"write_errors"`
 	Requests     int64   `json:"requests"`
 	Timeouts     int64   `json:"timeouts"`
 }
@@ -57,7 +59,9 @@ type Result struct {
 	P90Latency   float64       `json:"p90_lat_us"`
 	P95Latency   float64       `json:"p95_lat_us"`
 	P99Latency   float64       `json:"p99_lat_us"`
-	Errors       int64         `json:"http_errors"`
+	HTTPErrors   int64         `json:"http_errors"`
+	ReadErrors   int64         `json:"read_errors"`
+	WriteErrors  int64         `json:"write_errors"`
 	Requests     int64         `json:"requests"`
 	Timeouts     int64         `json:"timeouts"`
 	ocpmetadata.ClusterMetadata

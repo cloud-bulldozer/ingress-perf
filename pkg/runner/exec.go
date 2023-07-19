@@ -150,7 +150,9 @@ func genResultSummary(result *tools.Result) {
 		result.StdevRps += pod.StdevRps
 		result.AvgLatency += pod.AvgLatency
 		result.StdevLatency += pod.StdevLatency
-		result.Errors += pod.Errors
+		result.HTTPErrors += pod.HTTPErrors
+		result.ReadErrors += pod.ReadErrors
+		result.WriteErrors += pod.WriteErrors
 		result.Requests += pod.Requests
 		result.Timeouts += pod.Timeouts
 		if pod.MaxLatency > result.MaxLatency {
