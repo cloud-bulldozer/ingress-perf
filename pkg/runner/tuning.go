@@ -26,7 +26,7 @@ import (
 
 // ApplyTunning applies the given json merge patch to the default ingresscontroller CR
 // and then waits for the ingres-controller deployment reconciliation to take place
-func ApplyTunning(tuningPatch string) error {
+func applyTunning(tuningPatch string) error {
 	log.Infof("Applying tuning patch to ingress controller: %v", tuningPatch)
 	_, err := dynamicClient.Resource(schema.GroupVersionResource{
 		Group:    "operator.openshift.io",

@@ -77,6 +77,7 @@ func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata
 			Timestamp:       ts,
 			ClusterMetadata: clusterMetadata,
 		}
+		result.Config.Tuning = currentTuning // It's usefult to index the current tunning configuration in the all benchmark's documents
 		log.Infof("Running sample %d/%d: %v", i, cfg.Samples, cfg.Duration)
 		for _, pod := range clientPods {
 			for i := 0; i < cfg.Procs; i++ {
@@ -86,7 +87,7 @@ func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata
 		}
 		wg.Wait()
 		genResultSummary(&result)
-		log.Infof("Summary: Rps=%.2f req/s avgLatency=%.2f μs P99Latency=%.2f μs", result.TotalAvgRps, result.AvgLatency, result.P99Latency)
+		log.Infof("Summary for %s: Rps=%.0f avgLatency=%.0f μs P99Latency=%.0f μs", cfg.Termination, result.TotalAvgRps, result.AvgLatency, result.P99Latency)
 		benchmarkResult = append(benchmarkResult, result)
 		if cfg.Delay != 0 {
 			log.Info("Sleeping for ", cfg.Delay)
@@ -143,7 +144,7 @@ func exec(ctx context.Context, wg *sync.WaitGroup, tool tools.Tool, pod corev1.P
 	lock.Lock()
 	result.Pods = append(result.Pods, podResult)
 	lock.Unlock()
-	log.Debugf("%s: avgRps: %.2f req/s avgLatency: %.2f μs", podResult.Name, podResult.AvgRps, podResult.AvgLatency)
+	log.Debugf("%s: avgRps: %.0f avgLatency: %.0f μs", podResult.Name, podResult.AvgRps, podResult.AvgLatency)
 }
 
 func genResultSummary(result *tools.Result) {
