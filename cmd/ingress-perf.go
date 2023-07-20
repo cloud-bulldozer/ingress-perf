@@ -15,15 +15,13 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"os/exec"
-	"strings"
 
 	"github.com/cloud-bulldozer/go-commons/indexers"
 	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
 	_ "github.com/cloud-bulldozer/ingress-perf/pkg/log"
 	"github.com/cloud-bulldozer/ingress-perf/pkg/runner"
+	"github.com/cloud-bulldozer/kube-burner/pkg/version"
 	uid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
@@ -32,6 +30,14 @@ import (
 
 var cmd = &cobra.Command{
 	Short: "Benchmark OCP ingress stack",
+}
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "😎 Print the version number of ingress-perf",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("%s@%s \n", version.Version, version.GitCommit)
+	},
 }
 
 func run() *cobra.Command {
@@ -89,47 +95,8 @@ func run() *cobra.Command {
 	return cmd
 }
 
-func getGitInfo() (string, string) {
-
-	// Get the last released tag info
-	cmdTag := exec.Command("git", "describe", "--tags", "--abbrev=0")
-	var outTag bytes.Buffer
-	cmdTag.Stdout = &outTag
-	errTag := cmdTag.Run()
-	gitTag := "Unknown"
-	if errTag == nil {
-		gitTag = strings.TrimSpace(outTag.String())
-	}
-
-	// Get the last Commit Hash
-	cmdCommit := exec.Command("git", "rev-parse", "--short", "HEAD")
-	var outCommit bytes.Buffer
-	cmdCommit.Stdout = &outCommit
-	errCommit := cmdCommit.Run()
-	gitCommitHash := "Unknown"
-	if errCommit == nil {
-		gitCommitHash = strings.TrimSpace(outCommit.String())
-	}
-
-	return gitTag, gitCommitHash
-}
-
-func version() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:           "version",
-		Short:         "Print the version number ",
-		SilenceErrors: true,
-		SilenceUsage:  true,
-		Run: func(cmd *cobra.Command, args []string) {
-			gitTag, gitCommitHash := getGitInfo()
-			fmt.Printf("😎 Ingress-perf version is %s@%s \n", gitTag, gitCommitHash)
-		},
-	}
-	return cmd
-}
-
 func main() {
-	cmd.AddCommand(run(), version())
+	cmd.AddCommand(run(), versionCmd)
 	if err := cmd.Execute(); err != nil {
 		log.Fatal(err.Error())
 	}

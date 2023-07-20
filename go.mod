@@ -3,7 +3,8 @@ module github.com/cloud-bulldozer/ingress-perf
 go 1.19
 
 require (
-	github.com/cloud-bulldozer/go-commons v1.0.7
+	github.com/cloud-bulldozer/go-commons v1.0.9
+	github.com/cloud-bulldozer/kube-burner v1.7.3
 	github.com/openshift/api v0.0.0-20230414095907-0540dde8186d
 	github.com/openshift/client-go v0.0.0-20221019143426-16aed247da5c
 	github.com/satori/go.uuid v1.2.0
@@ -30,7 +31,7 @@ require (
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/imdario/mergo v0.3.6 // indirect
+	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
