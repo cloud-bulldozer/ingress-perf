@@ -42,6 +42,7 @@ Available Commands:
   completion  Generate the autocompletion script for the specified shell
   help        Help about any command
   run         Run benchmark
+  help        Print the version
 
 Flags:
   -h, --help   help for this command
