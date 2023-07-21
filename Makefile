@@ -9,7 +9,7 @@ endif
 
 SOURCES := $(shell find . -type f -name "*.go")
 BUILD_DATE = $(shell date '+%Y-%m-%d-%H:%M:%S')
-INGRESS_PERF_VERSION= github.com/cloud-bulldozer/kube-burner/pkg/version
+INGRESS_PERF_VERSION= github.com/cloud-bulldozer/ingress-perf/pkg/version
 
 BIN_DIR = bin
 BIN_NAME = ingress-perf

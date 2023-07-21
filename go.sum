@@ -6,8 +6,6 @@ github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cloud-bulldozer/go-commons v1.0.9 h1:JNLcC36kk6Iml0JuBXUSyi8iR+ebgCeMWQScwnSUekw=
 github.com/cloud-bulldozer/go-commons v1.0.9/go.mod h1:peHBEG4iCC9zKFzA4P16dpINZASWshsCy9T4dVpcBVI=
-github.com/cloud-bulldozer/kube-burner v1.7.3 h1:CO+fk6HGjoBfT4pTQGjfiwRd23Fo5isUp7JUXpHhDT0=
-github.com/cloud-bulldozer/kube-burner v1.7.3/go.mod h1:NnqtBx6cW53zlVf65Mv2U43hDlc/VF0FquFmjUeySV4=
 github.com/cpuguy83/go-md2man/v2 v2.0.2/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
