@@ -22,6 +22,7 @@ Ingress-perf configuration is defined in a YAML file, holding an array of the fo
 | `delay`          | `time.Duration`  | Defines a delay between samples.                                                                         | `0s`          |
 | `warmup`         | `bool`           | Enables warmup: indexing will be disabled in this scenario.                                              | `false`       |
 | `requestTimeout` | `time.Duration`  | Request timeout                                                                                          | `1s`       |
+| `procs         ` | `int`            | Number of processes to trigger in each of the client pods                                                | `1`       |
 
 ## Supported tools
 
