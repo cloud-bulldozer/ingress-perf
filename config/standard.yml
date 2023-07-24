@@ -22,6 +22,7 @@
   tool: wrk
   serverReplicas: 90
   delay: 10s
+  procs: 2
 
 - termination: edge
   connections: 200
@@ -32,6 +33,7 @@
   tool: wrk
   serverReplicas: 90
   delay: 10s
+  procs: 2
 
 - termination: reencrypt
   connections: 200
@@ -42,6 +44,7 @@
   tool: wrk
   serverReplicas: 90
   delay: 10s
+  procs: 2
 
 - termination: passthrough
   connections: 200
@@ -52,6 +55,7 @@
   tool: wrk
   serverReplicas: 90
   delay: 10s
+  procs: 2
 
 - termination: http
   connections: 200

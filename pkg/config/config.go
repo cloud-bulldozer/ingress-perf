@@ -27,6 +27,7 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	defaultCfg := ConfigDefaulted{
 		Warmup:         false, // Disable warmup by default
 		RequestTimeout: time.Second,
+		Procs:          1,
 	}
 	if err := unmarshal(&defaultCfg); err != nil {
 		return err
