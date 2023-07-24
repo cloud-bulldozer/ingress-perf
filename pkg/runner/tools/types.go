@@ -64,5 +64,6 @@ type Result struct {
 	WriteErrors  int64         `json:"write_errors"`
 	Requests     int64         `json:"requests"`
 	Timeouts     int64         `json:"timeouts"`
+	Version      string        `json:"version"`
 	ocpmetadata.ClusterMetadata
 }
