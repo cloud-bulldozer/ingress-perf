@@ -24,6 +24,7 @@ import (
 	ocpmetadata "github.com/cloud-bulldozer/go-commons/ocp-metadata"
 	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
 	"github.com/cloud-bulldozer/ingress-perf/pkg/runner/tools"
+	"github.com/cloud-bulldozer/ingress-perf/pkg/version"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -172,4 +173,5 @@ func genResultSummary(result *tools.Result) {
 	result.P90Latency = result.P90Latency / pods
 	result.P95Latency = result.P95Latency / pods
 	result.P99Latency = result.P99Latency / pods
+	result.Version = fmt.Sprintf("%v@%v", version.Version, version.GitCommit)
 }

@@ -21,6 +21,7 @@ import (
 	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
 	_ "github.com/cloud-bulldozer/ingress-perf/pkg/log"
 	"github.com/cloud-bulldozer/ingress-perf/pkg/runner"
+	"github.com/cloud-bulldozer/ingress-perf/pkg/version"
 	uid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
@@ -29,6 +30,18 @@ import (
 
 var cmd = &cobra.Command{
 	Short: "Benchmark OCP ingress stack",
+}
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "😎 Print the version number of ingress-perf",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("Version:", version.Version)
+		fmt.Println("Git Commit:", version.GitCommit)
+		fmt.Println("Build Date:", version.BuildDate)
+		fmt.Println("Go Version:", version.GoVersion)
+		fmt.Println("OS/Arch:", version.OsArch)
+	},
 }
 
 func run() *cobra.Command {
@@ -87,7 +100,7 @@ func run() *cobra.Command {
 }
 
 func main() {
-	cmd.AddCommand(run())
+	cmd.AddCommand(run(), versionCmd)
 	if err := cmd.Execute(); err != nil {
 		log.Fatal(err.Error())
 	}
