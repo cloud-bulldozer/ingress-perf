@@ -23,7 +23,7 @@ all: lint build
 build: $(BIN_PATH)
 
 $(BIN_PATH): $(SOURCES)
-	GOARCH=$(go env GOARCH) CGO_ENABLED=$(CGO) go build -v -ldflags "-X $(INGRESS_PERF_VERSION).GitCommit=$(GIT_COMMIT) -X $(INGRESS_PERF_VERSION).Version=$(VERSION) -X $(INGRESS_PERF_VERSION).BuildDate=$(BUILD_DATE)" -o $(BIN_PATH) cmd/ingress-perf.go
+	GOARCH=$(shell go env GOARCH) CGO_ENABLED=$(CGO) go build -v -ldflags "-X $(INGRESS_PERF_VERSION).GitCommit=$(GIT_COMMIT) -X $(INGRESS_PERF_VERSION).Version=$(VERSION) -X $(INGRESS_PERF_VERSION).BuildDate=$(BUILD_DATE)" -o $(BIN_PATH) cmd/ingress-perf.go
 
 clean:
 	rm -Rf $(BIN_DIR)
