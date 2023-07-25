@@ -14,6 +14,8 @@ builds:
       - ppc64le
       - s390x
     dir: ./cmd/
+    ldflags:
+      - -X github.com/cloud-bulldozer/ingress-perf/pkg/version.GitCommit={{.Commit}} -X github.com/cloud-bulldozer/ingress-perf/pkg/version.BuildDate={{.Date}} -X github.com/cloud-bulldozer/ingress-perf/pkg/version.Version={{.Version}}
 
 archives:
   - format: tar.gz
