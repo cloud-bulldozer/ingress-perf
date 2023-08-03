@@ -8,7 +8,7 @@ else
 endif
 
 BUILD_DATE = $(shell date '+%Y-%m-%d-%H:%M:%S')
-INGRESS_PERF_VERSION= github.com/cloud-bulldozer/go-commonds/version
+INGRESS_PERF_VERSION= github.com/cloud-bulldozer/go-commons/version
 
 BIN_DIR = bin
 BIN_NAME = ingress-perf
