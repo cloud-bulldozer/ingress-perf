@@ -3,7 +3,7 @@ module github.com/cloud-bulldozer/ingress-perf
 go 1.19
 
 require (
-	github.com/cloud-bulldozer/go-commons v1.0.9
+	github.com/cloud-bulldozer/go-commons v1.0.10
 	github.com/openshift/api v0.0.0-20230414095907-0540dde8186d
 	github.com/openshift/client-go v0.0.0-20221019143426-16aed247da5c
 	github.com/satori/go.uuid v1.2.0

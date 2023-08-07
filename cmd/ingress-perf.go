@@ -18,10 +18,10 @@ import (
 	"fmt"
 
 	"github.com/cloud-bulldozer/go-commons/indexers"
+	"github.com/cloud-bulldozer/go-commons/version"
 	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
 	_ "github.com/cloud-bulldozer/ingress-perf/pkg/log"
 	"github.com/cloud-bulldozer/ingress-perf/pkg/runner"
-	"github.com/cloud-bulldozer/ingress-perf/pkg/version"
 	uid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
