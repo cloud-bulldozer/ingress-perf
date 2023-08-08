@@ -179,7 +179,12 @@ func cleanup(timeout time.Duration) error {
 
 func deployAssets() error {
 	log.Infof("Deploying benchmark assets")
-	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: benchmarkNs}}
+	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: benchmarkNs, Labels: map[string]string{
+		"pod-security.kubernetes.io/warn":                "privileged",
+		"pod-security.kubernetes.io/audit":               "privileged",
+		"pod-security.kubernetes.io/enforce":             "privileged",
+		"security.openshift.io/scc.podSecurityLabelSync": "false",
+	}}}
 	_, err := clientSet.CoreV1().Namespaces().Create(context.TODO(), ns, metav1.CreateOptions{})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
