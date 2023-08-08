@@ -78,7 +78,9 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 		return err
 	}
 	if indexer != nil {
-		comparator = comparison.NewComparator(*indexers.ESClient, baseIndex)
+		if _, ok := (*indexer).(*indexers.Elastic); ok {
+			comparator = comparison.NewComparator(*indexers.ESClient, baseIndex)
+		}
 	}
 	if err := deployAssets(); err != nil {
 		return err
@@ -109,11 +111,13 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 		}
 		if indexer != nil {
 			if !cfg.Warmup {
-				benchmarkResultDocuments := make([]interface{}, len(benchmarkResult))
+				var benchmarkResultDocuments []interface{}
 				for _, res := range benchmarkResult {
 					benchmarkResultDocuments = append(benchmarkResultDocuments, res)
 				}
-				msg, err := (*indexer).Index(benchmarkResultDocuments, indexers.IndexingOpts{})
+				msg, err := (*indexer).Index(benchmarkResultDocuments, indexers.IndexingOpts{
+					MetricName: uuid,
+				})
 				if err != nil {
 					return err
 				}
