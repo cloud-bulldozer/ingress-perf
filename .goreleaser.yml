@@ -15,7 +15,7 @@ builds:
       - s390x
     dir: ./cmd/
     ldflags:
-      - -X github.com/cloud-bulldozer/ingress-perf/pkg/version.GitCommit={{.Commit}} -X github.com/cloud-bulldozer/ingress-perf/pkg/version.BuildDate={{.Date}} -X github.com/cloud-bulldozer/ingress-perf/pkg/version.Version={{.Version}}
+      - -X github.com/cloud-bulldozer/go-commons/version.GitCommit={{.Commit}} -X github.com/cloud-bulldozer/go-commons/version.BuildDate={{.Date}} -X github.com/cloud-bulldozer/go-commons/version.Version={{.Version}}
 
 archives:
   - format: tar.gz
