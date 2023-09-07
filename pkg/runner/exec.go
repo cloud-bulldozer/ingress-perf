@@ -92,7 +92,7 @@ func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata
 		aggAvgRps += result.TotalAvgRps
 		aggAvgLatency += result.AvgLatency
 		aggP99Latency += result.P99Latency
-		log.Infof("Rps=%.0f avgLatency=%.0f μs P99Latency=%.0f μs", result.TotalAvgRps, result.AvgLatency, result.P99Latency)
+		log.Infof("%s: Rps=%.0f avgLatency=%.0f ms P99Latency=%.0f ms", cfg.Termination, result.TotalAvgRps, result.AvgLatency/1000, result.P99Latency/1000)
 		benchmarkResult = append(benchmarkResult, result)
 		if cfg.Delay != 0 {
 			log.Info("Sleeping for ", cfg.Delay)
@@ -100,7 +100,7 @@ func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata
 		}
 	}
 	validSamples := float64(len(benchmarkResult))
-	log.Infof("Scenario summary %s: Rps=%.0f avgLatency=%.0f μs P99Latency=%.0f μs", cfg.Termination, aggAvgRps/validSamples, aggAvgLatency/validSamples, aggP99Latency/validSamples)
+	log.Infof("Scenario summary %s: Rps=%.0f avgLatency=%.0f ms P99Latency=%.0f ms", cfg.Termination, aggAvgRps/validSamples, aggAvgLatency/validSamples/1000, aggP99Latency/validSamples/1000)
 	return benchmarkResult, nil
 }
 
@@ -151,7 +151,7 @@ func exec(ctx context.Context, wg *sync.WaitGroup, tool tools.Tool, pod corev1.P
 	lock.Lock()
 	result.Pods = append(result.Pods, podResult)
 	lock.Unlock()
-	log.Debugf("%s: avgRps: %.0f avgLatency: %.0f μs", podResult.Name, podResult.AvgRps, podResult.AvgLatency)
+	log.Debugf("%s: avgRps: %.0f avgLatency: %.0f ms", podResult.Name, podResult.AvgRps, podResult.AvgLatency/1000)
 }
 
 func genResultSummary(result *tools.Result) {
