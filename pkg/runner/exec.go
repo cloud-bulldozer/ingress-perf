@@ -99,7 +99,8 @@ func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata
 			time.Sleep(cfg.Delay)
 		}
 	}
-	log.Infof("Scenario summary %s: Rps=%.0f avgLatency=%.0f μs P99Latency=%.0f μs", cfg.Termination, aggAvgRps/float64(cfg.Samples), aggAvgLatency/float64(cfg.Samples), aggP99Latency/float64(cfg.Samples))
+	validSamples := float64(len(benchmarkResult))
+	log.Infof("Scenario summary %s: Rps=%.0f avgLatency=%.0f μs P99Latency=%.0f μs", cfg.Termination, aggAvgRps/validSamples, aggAvgLatency/validSamples, aggP99Latency/validSamples)
 	return benchmarkResult, nil
 }
 
