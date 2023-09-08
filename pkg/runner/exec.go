@@ -37,6 +37,7 @@ var lock = &sync.Mutex{}
 
 func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata) ([]tools.Result, error) {
 	var aggAvgRps, aggAvgLatency, aggP99Latency float64
+	var timeouts, httpErrors int64
 	var benchmarkResult []tools.Result
 	var clientPods []corev1.Pod
 	var wg sync.WaitGroup
@@ -92,7 +93,9 @@ func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata
 		aggAvgRps += result.TotalAvgRps
 		aggAvgLatency += result.AvgLatency
 		aggP99Latency += result.P99Latency
-		log.Infof("%s: Rps=%.0f avgLatency=%.0f ms P99Latency=%.0f ms", cfg.Termination, result.TotalAvgRps, result.AvgLatency/1000, result.P99Latency/1000)
+		timeouts += result.Timeouts
+		httpErrors += result.HTTPErrors
+		log.Infof("%s: Rps=%.0f avgLatency=%.0fms P99Latency=%.0fms", cfg.Termination, result.TotalAvgRps, result.AvgLatency/1e3, result.P99Latency/1e3)
 		benchmarkResult = append(benchmarkResult, result)
 		if cfg.Delay != 0 {
 			log.Info("Sleeping for ", cfg.Delay)
@@ -100,7 +103,14 @@ func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata
 		}
 	}
 	validSamples := float64(len(benchmarkResult))
-	log.Infof("Scenario summary %s: Rps=%.0f avgLatency=%.0f ms P99Latency=%.0f ms", cfg.Termination, aggAvgRps/validSamples, aggAvgLatency/validSamples/1000, aggP99Latency/validSamples/1000)
+	log.Infof("Scenario summary %s: Rps=%.0f avgLatency=%.0fms P99Latency=%.0fms timeouts=%d http_errors=%d",
+		cfg.Termination,
+		aggAvgRps/validSamples,
+		aggAvgLatency/validSamples/1e3,
+		aggP99Latency/validSamples/1e3,
+		timeouts,
+		httpErrors,
+	)
 	return benchmarkResult, nil
 }
 
