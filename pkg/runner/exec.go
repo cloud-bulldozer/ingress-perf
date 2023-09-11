@@ -26,6 +26,7 @@ import (
 	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
 	"github.com/cloud-bulldozer/ingress-perf/pkg/runner/tools"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -40,7 +41,6 @@ func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata
 	var timeouts, httpErrors int64
 	var benchmarkResult []tools.Result
 	var clientPods []corev1.Pod
-	var wg sync.WaitGroup
 	var ep string
 	var tool tools.Tool
 	r, err := orClientSet.RouteV1().Routes(benchmarkNs).Get(context.TODO(), fmt.Sprintf("%s-%s", serverName, cfg.Termination), metav1.GetOptions{})
@@ -80,15 +80,22 @@ func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata
 			Timestamp:       ts,
 			ClusterMetadata: clusterMetadata,
 		}
-		result.Config.Tuning = currentTuning // It's usefult to index the current tunning configuration in the all benchmark's documents
+		result.Config.Tuning = currentTuning // It's useful to index the current tuning patch in the all benchmark's documents
 		log.Infof("Running sample %d/%d: %v", i, cfg.Samples, cfg.Duration)
+		errGroup := errgroup.Group{}
 		for _, pod := range clientPods {
 			for i := 0; i < cfg.Procs; i++ {
-				wg.Add(1)
-				go exec(context.TODO(), &wg, tool, pod, &result)
+				func(p corev1.Pod) {
+					errGroup.Go(func() error {
+						return exec(context.TODO(), tool, p, &result)
+					})
+				}(pod)
 			}
 		}
-		wg.Wait()
+		if err = errGroup.Wait(); err != nil {
+			log.Error("Errors found during execution, skipping sample")
+			continue
+		}
 		genResultSummary(&result)
 		aggAvgRps += result.TotalAvgRps
 		aggAvgLatency += result.AvgLatency
@@ -114,8 +121,7 @@ func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata
 	return benchmarkResult, nil
 }
 
-func exec(ctx context.Context, wg *sync.WaitGroup, tool tools.Tool, pod corev1.Pod, result *tools.Result) {
-	defer wg.Done()
+func exec(ctx context.Context, tool tools.Tool, pod corev1.Pod, result *tools.Result) error {
 	var stdout, stderr bytes.Buffer
 	req := clientSet.CoreV1().RESTClient().Post().
 		Resource("pods").
@@ -133,27 +139,27 @@ func exec(ctx context.Context, wg *sync.WaitGroup, tool tools.Tool, pod corev1.P
 	exec, err := remotecommand.NewSPDYExecutor(restConfig, "POST", req.URL())
 	if err != nil {
 		log.Error(err.Error())
-		return
+		return err
 	}
 	err = exec.StreamWithContext(ctx, remotecommand.StreamOptions{
 		Stdout: &stdout,
 		Stderr: &stderr,
 	})
 	if err != nil {
-		log.Errorf("Exec failed, skipping: %v", err.Error())
-		return
+		log.Errorf("Exec failed in pod %s: %v", pod.Name, err.Error())
+		return err
 	}
 	podResult, err := tool.ParseResult(stdout.String(), stderr.String())
 	if err != nil {
-		log.Errorf("Result parsing failed, skipping: %v", err.Error())
-		return
+		log.Errorf("Result parsing failed: %v", err.Error())
+		return err
 	}
 	podResult.Name = pod.Name
 	podResult.Node = pod.Spec.NodeName
 	node, err := clientSet.CoreV1().Nodes().Get(context.TODO(), podResult.Node, metav1.GetOptions{})
 	if err != nil {
 		log.Errorf("Couldn't fetch node: %v", err.Error())
-		return
+		return err
 	}
 	if d, ok := node.Labels["node.kubernetes.io/instance-type"]; ok {
 		podResult.InstanceType = d
@@ -162,6 +168,7 @@ func exec(ctx context.Context, wg *sync.WaitGroup, tool tools.Tool, pod corev1.P
 	result.Pods = append(result.Pods, podResult)
 	lock.Unlock()
 	log.Debugf("%s: avgRps: %.0f avgLatency: %.0f ms", podResult.Name, podResult.AvgRps, podResult.AvgLatency/1000)
+	return nil
 }
 
 func genResultSummary(result *tools.Result) {
