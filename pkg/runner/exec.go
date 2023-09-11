@@ -37,6 +37,7 @@ var lock = &sync.Mutex{}
 
 func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata) ([]tools.Result, error) {
 	var aggAvgRps, aggAvgLatency, aggP99Latency float64
+	var timeouts, httpErrors int64
 	var benchmarkResult []tools.Result
 	var clientPods []corev1.Pod
 	var wg sync.WaitGroup
@@ -92,14 +93,24 @@ func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata
 		aggAvgRps += result.TotalAvgRps
 		aggAvgLatency += result.AvgLatency
 		aggP99Latency += result.P99Latency
-		log.Infof("Rps=%.0f avgLatency=%.0f μs P99Latency=%.0f μs", result.TotalAvgRps, result.AvgLatency, result.P99Latency)
+		timeouts += result.Timeouts
+		httpErrors += result.HTTPErrors
+		log.Infof("%s: Rps=%.0f avgLatency=%.0fms P99Latency=%.0fms", cfg.Termination, result.TotalAvgRps, result.AvgLatency/1e3, result.P99Latency/1e3)
 		benchmarkResult = append(benchmarkResult, result)
 		if cfg.Delay != 0 {
 			log.Info("Sleeping for ", cfg.Delay)
 			time.Sleep(cfg.Delay)
 		}
 	}
-	log.Infof("Scenario summary %s: Rps=%.0f avgLatency=%.0f μs P99Latency=%.0f μs", cfg.Termination, aggAvgRps/float64(cfg.Samples), aggAvgLatency/float64(cfg.Samples), aggP99Latency/float64(cfg.Samples))
+	validSamples := float64(len(benchmarkResult))
+	log.Infof("Scenario summary %s: Rps=%.0f avgLatency=%.0fms P99Latency=%.0fms timeouts=%d http_errors=%d",
+		cfg.Termination,
+		aggAvgRps/validSamples,
+		aggAvgLatency/validSamples/1e3,
+		aggP99Latency/validSamples/1e3,
+		timeouts,
+		httpErrors,
+	)
 	return benchmarkResult, nil
 }
 
@@ -150,7 +161,7 @@ func exec(ctx context.Context, wg *sync.WaitGroup, tool tools.Tool, pod corev1.P
 	lock.Lock()
 	result.Pods = append(result.Pods, podResult)
 	lock.Unlock()
-	log.Debugf("%s: avgRps: %.0f avgLatency: %.0f μs", podResult.Name, podResult.AvgRps, podResult.AvgLatency)
+	log.Debugf("%s: avgRps: %.0f avgLatency: %.0f ms", podResult.Name, podResult.AvgRps, podResult.AvgLatency/1000)
 }
 
 func genResultSummary(result *tools.Result) {
