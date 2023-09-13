@@ -3,7 +3,7 @@ name: Release ingress-netperf container image
 on:
   pull_request:
     paths:
-      - 'containers/Containerfile' # Trigger only when Dockerfile changes in a pull request
+      - 'containers/**' # Trigger only when Dockerfile changes in a pull request
 
 env:
   CONTAINER_REGISTRY: ${{ github.repository_owner == 'cloud-bulldozer' && 'quay.io' }}
@@ -62,6 +62,5 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            RHEL_VERSION=${{ env.RHEL_VERSION }}
             GO_VER=${{ env.GO_VER }}
             GO_TAGS=
