@@ -87,7 +87,7 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 	}
 	for i, cfg := range config.Cfg {
 		cfg.UUID = uuid
-		log.Infof("Running test %d/%d ", i+1, len(config.Cfg))
+		log.Infof("Running test %d/%d", i+1, len(config.Cfg))
 		log.Infof("Tool:%s termination:%v servers:%d concurrency:%d procs:%d connections:%d duration:%v",
 			cfg.Tool,
 			cfg.Termination,
