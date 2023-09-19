@@ -7,7 +7,6 @@ on:
 
 env:
   CONTAINER_REGISTRY: ${{ github.repository_owner == 'cloud-bulldozer' && 'quay.io' }}
-  RHEL_VERSION: ubi9
   GO_VER: 1.19
 
 jobs:
@@ -52,15 +51,11 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}.{{minor}}.{{patch}}
 
-      - name: Build and push multi-arch Image
+      - name: Build and Push Multi archiecture Image
         id: push
-        uses: docker/build-push-action@v3
-        with:
-          file: containers/Dockerfile
-          platforms: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x
-          tags: ${{ steps.meta.outputs.tags }}
-          push: ${{ github.event_name != 'pull_request' }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
+        run: |
+          make gha-build
+          make push
+        env:
             GO_VER=${{ env.GO_VER }}
             GO_TAGS=

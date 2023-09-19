@@ -32,9 +32,18 @@ container-build: build
 	$(CONTAINER_BUILD) -f containers/Containerfile \
 	-t $(CONTAINER_NS)/$(BIN_NAME) ./containers
 
+gha-build: build
+	@echo "Building Multi-architecture container Images"
+	$(CONTAINER_BUILD) -f containers/Containerfile \
+	--platform=linux/amd64,linux/arm64,linux/ppc64le,linux/s390x \
+	-t $(CONTAINER_NS)/$(BIN_NAME) ./containers --manifest=$(CONTAINER_NS)/$(BIN_NAME):latest
+
+gha-push: gha-build
+	@echo "Pushing Container Images"
+	$(CONTAINER_BUILD) manifest push
+
 clean:
 	rm -Rf $(BIN_DIR)
 
 lint:
 	golangci-lint run
-
