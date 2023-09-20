@@ -21,7 +21,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
@@ -58,13 +57,6 @@ var workerAffinity = &corev1.Affinity{
 	},
 }
 
-var clientServerRequests = corev1.ResourceRequirements{
-	Requests: corev1.ResourceList{
-		"cpu":    resource.MustParse("100m"),
-		"memory": resource.MustParse("250Mi"),
-	},
-}
-
 var server = appsv1.Deployment{
 	ObjectMeta: metav1.ObjectMeta{
 		Name:      serverName,
@@ -82,6 +74,14 @@ var server = appsv1.Deployment{
 				Labels: map[string]string{"app": serverName},
 			},
 			Spec: corev1.PodSpec{
+				TopologySpreadConstraints: []corev1.TopologySpreadConstraint{{
+					MaxSkew:           1,
+					TopologyKey:       "kubernetes.io/hostname",
+					WhenUnsatisfiable: corev1.DoNotSchedule,
+					LabelSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{"app": serverName},
+					},
+				}},
 				Affinity:                      workerAffinity,
 				TerminationGracePeriodSeconds: pointer.Int64(0), // It helps to kill the pod inmediatly on GC
 				Containers: []corev1.Container{
@@ -95,8 +95,7 @@ var server = appsv1.Deployment{
 							RunAsNonRoot:             pointer.Bool(true),
 							SeccompProfile:           &corev1.SeccompProfile{Type: corev1.SeccompProfileTypeRuntimeDefault},
 						},
-						Resources: clientServerRequests,
-						Ports:     []corev1.ContainerPort{{Name: "http", Protocol: corev1.ProtocolTCP, ContainerPort: 8080}},
+						Ports: []corev1.ContainerPort{{Name: "http", Protocol: corev1.ProtocolTCP, ContainerPort: 8080}},
 					},
 				},
 			},
@@ -135,6 +134,14 @@ var client = appsv1.Deployment{
 				Labels: map[string]string{"app": clientName},
 			},
 			Spec: corev1.PodSpec{
+				TopologySpreadConstraints: []corev1.TopologySpreadConstraint{{
+					MaxSkew:           1,
+					TopologyKey:       "kubernetes.io/hostname",
+					WhenUnsatisfiable: corev1.DoNotSchedule,
+					LabelSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{"app": clientName},
+					},
+				}},
 				Affinity:                      workerAffinity,
 				TerminationGracePeriodSeconds: pointer.Int64(0),
 				HostNetwork:                   true, // Enable hostNetwork in client pods
@@ -150,7 +157,6 @@ var client = appsv1.Deployment{
 							RunAsNonRoot:             pointer.Bool(true),
 							SeccompProfile:           &corev1.SeccompProfile{Type: corev1.SeccompProfileTypeRuntimeDefault},
 						},
-						Resources: clientServerRequests,
 					},
 				},
 			},
