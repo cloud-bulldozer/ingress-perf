@@ -53,6 +53,7 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 	var kubeconfig string
 	var benchmarkResult []tools.Result
 	var comparator comparison.Comparator
+	var clusterMetadata tools.ClusterMetadata
 	passed := true
 	log.Info("Starting ingress-perf")
 	if os.Getenv("KUBECONFIG") != "" {
@@ -73,7 +74,11 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 	if err != nil {
 		return err
 	}
-	clusterMetadata, err := ocpMetadata.GetClusterMetadata()
+	clusterMetadata.ClusterMetadata, err = ocpMetadata.GetClusterMetadata()
+	if err != nil {
+		return err
+	}
+	clusterMetadata.HAProxyVersion, err = getHAProxyVersion()
 	if err != nil {
 		return err
 	}

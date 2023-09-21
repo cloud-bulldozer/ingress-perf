@@ -21,6 +21,12 @@ import (
 	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
 )
 
+// We need to embed ClusterMetadata in order to add extra fields to it
+type ClusterMetadata struct {
+	ocpmetadata.ClusterMetadata
+	HAProxyVersion string `json:"haproxyVersion,omitempty"`
+}
+
 type Tool interface {
 	ParseResult(string, string) (PodResult, error)
 	Cmd() []string
@@ -65,5 +71,5 @@ type Result struct {
 	Requests     int64         `json:"requests"`
 	Timeouts     int64         `json:"timeouts"`
 	Version      string        `json:"version"`
-	ocpmetadata.ClusterMetadata
+	ClusterMetadata
 }

@@ -21,7 +21,6 @@ import (
 	"sync"
 	"time"
 
-	ocpmetadata "github.com/cloud-bulldozer/go-commons/ocp-metadata"
 	"github.com/cloud-bulldozer/go-commons/version"
 	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
 	"github.com/cloud-bulldozer/ingress-perf/pkg/runner/tools"
@@ -36,7 +35,7 @@ import (
 
 var lock = &sync.Mutex{}
 
-func runBenchmark(cfg config.Config, clusterMetadata ocpmetadata.ClusterMetadata) ([]tools.Result, error) {
+func runBenchmark(cfg config.Config, clusterMetadata tools.ClusterMetadata) ([]tools.Result, error) {
 	var aggAvgRps, aggAvgLatency, aggP99Latency float64
 	var timeouts, httpErrors int64
 	var benchmarkResult []tools.Result
