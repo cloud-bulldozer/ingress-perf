@@ -38,7 +38,7 @@ jobs:
         run: go version
 
       - name: Login to the ${{ env.CONTAINER_REGISTRY }} Container Registry
-        run: podman login quay.io -u ${QUAY_USER} -p ${QUAY_TOKEN}
+        run: podman login quay.io -u ${QUAY_USER} -p ${QUAY_TOKEN} 
         env:
           QUAY_USER: ${{ secrets.QUAY_USER }}
           QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}
