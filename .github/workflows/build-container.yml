@@ -1,7 +1,7 @@
 name: Release ingress-netperf container image
 
 on:
-  pull_request:
+  push:
     paths:
       - "containers/**" # Trigger only when Dockerfile changes in a pull request
 
