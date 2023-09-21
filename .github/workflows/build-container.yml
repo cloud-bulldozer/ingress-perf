@@ -48,5 +48,6 @@ jobs:
         run: |
           make gha-build
           make gha-push
-        env: GO_VER=${{ env.GO_VER }}
+        env:
+          GO_VER=${{ env.GO_VER }}
           GO_TAGS=
