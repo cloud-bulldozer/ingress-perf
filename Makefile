@@ -32,7 +32,7 @@ container-build: build
 	$(CONTAINER_BUILD) -f containers/Containerfile \
 	-t $(CONTAINER_NS)/$(BIN_NAME) ./containers
 
-gha-build: build
+gha-build:
 	@echo "Building Multi-architecture container Images"
 	$(CONTAINER_BUILD) -f containers/Containerfile \
 	--platform=linux/amd64,linux/arm64,linux/ppc64le,linux/s390x \
