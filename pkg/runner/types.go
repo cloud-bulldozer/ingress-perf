@@ -77,7 +77,7 @@ var server = appsv1.Deployment{
 				TopologySpreadConstraints: []corev1.TopologySpreadConstraint{{
 					MaxSkew:           1,
 					TopologyKey:       "kubernetes.io/hostname",
-					WhenUnsatisfiable: corev1.DoNotSchedule,
+					WhenUnsatisfiable: corev1.ScheduleAnyway,
 					LabelSelector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{"app": serverName},
 					},
@@ -137,7 +137,7 @@ var client = appsv1.Deployment{
 				TopologySpreadConstraints: []corev1.TopologySpreadConstraint{{
 					MaxSkew:           1,
 					TopologyKey:       "kubernetes.io/hostname",
-					WhenUnsatisfiable: corev1.DoNotSchedule,
+					WhenUnsatisfiable: corev1.ScheduleAnyway,
 					LabelSelector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{"app": clientName},
 					},
