@@ -55,7 +55,6 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 	var comparator comparison.Comparator
 	var clusterMetadata tools.ClusterMetadata
 	passed := true
-	log.Info("Starting ingress-perf")
 	if os.Getenv("KUBECONFIG") != "" {
 		kubeconfig = os.Getenv("KUBECONFIG")
 	} else if _, err := os.Stat(filepath.Join(os.Getenv("HOME"), ".kube", "config")); kubeconfig == "" && !os.IsNotExist(err) {

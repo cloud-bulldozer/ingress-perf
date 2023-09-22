@@ -64,7 +64,7 @@ func run() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var indexer *indexers.Indexer
 			var err error
-			log.Infof("Running ingress performance %s", uuid)
+			log.Infof("Running ingress-perf (%s@%s) with uuid %s", version.Version, version.GitCommit, uuid)
 			if err := config.Load(cfg); err != nil {
 				return err
 			}
