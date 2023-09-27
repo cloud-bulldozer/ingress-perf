@@ -17,6 +17,7 @@ BIN_NAME = ingress-perf
 BIN_PATH = $(BIN_DIR)/$(BIN_NAME)
 SOURCES = $(shell find . -type f -name "*.go")
 CGO = 0
+VEGETA_VERSION := 12.11.0
 
 .PHONY: build lint clean
 
@@ -30,12 +31,14 @@ $(BIN_PATH): $(SOURCES)
 container-build:
 	@echo "Building the container image"
 	$(CONTAINER_BUILD) -f containers/Containerfile \
+	--build-arg VEGETA_VERSION=$(VEGETA_VERSION) \
 	-t $(CONTAINER_NS)/$(BIN_NAME) ./containers
 
 gha-build:
 	@echo "Building Multi-architecture container Images"
 	$(CONTAINER_BUILD) -f containers/Containerfile \
 	--platform=linux/amd64,linux/arm64,linux/ppc64le,linux/s390x \
+	--build-arg VEGETA_VERSION=$(VEGETA_VERSION)
 	-t $(CONTAINER_NS)/$(BIN_NAME) ./containers --manifest=$(CONTAINER_NS)/$(BIN_NAME):latest
 
 gha-push: gha-build

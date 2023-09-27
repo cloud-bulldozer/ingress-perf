@@ -8,25 +8,29 @@ OCP Ingress performance ultimate tool!
 
 Ingress-perf configuration is defined in a YAML file, holding an array of the following structure. [Examples directory](./config)
 
-| Field Name       | Type             | Description                                                                                              | Default Value |
-|------------------|------------------|----------------------------------------------------------------------------------------------------------|---------------|
-| `termination`    | `string`         | Defines the type of benchmark termination. Allowed values are `http`, `edge`, `reencrypt` and `reencrypt`. | N/A           |
-| `connections`    | `int`            | Defines the number of connections per client.                                                            | `0`           |
-| `samples`        | `int`            | Defines the number of samples per scenario.                                                              | `0`           |
-| `duration`       | `time.Duration`  | Defines the duration of each sample.                                                                     | `""`          |
-| `path`           | `string`         | Defines the scenario endpoint path, for example: `/1024.html`, `/2048.html`.                              | `""`          |
-| `concurrency`    | `int32`          | Defines the number of clients that will concurrently run the benchmark scenario.                        | `0`           |
-| `tool`           | `string`         | Defines the tool to run the benchmark scenario.                                                         | `""`          |
-| `serverReplicas` | `int32`          | Defines the number of server (nginx) replicas backed by the routes.                                      | `0`           |
-| `tuningPatch`    | `string`         | Defines a JSON merge tuning patch for the default `IngressController` object.                            | `""`          |
-| `delay`          | `time.Duration`  | Defines a delay between samples.                                                                         | `0s`          |
-| `warmup`         | `bool`           | Enables warmup: indexing will be disabled in this scenario.                                              | `false`       |
-| `requestTimeout` | `time.Duration`  | Request timeout                                                                                          | `1s`       |
-| `procs         ` | `int`            | Number of processes to trigger in each of the client pods                                                | `1`       |
+| Field Name       | Type             | Description                                                                                 | Default Value | Tools |
+|------------------|------------------|---------------------------------------------------------------------------------------------|---------------|------------------|
+| `termination`    | `string`         | Benchmark termination. Allowed values are `http`, `edge`, `reencrypt` and `reencrypt`.      | N/A           | `wrk`,`vegeta`   |
+| `connections`    | `int`            | Number of connections per client.                                                           | `0`           | `wrk`,`vegeta`   |
+| `samples`        | `int`            | Number of samples per scenario.                                                             | `0`           | `wrk`,`vegeta`   |
+| `duration`       | `time.Duration`  | Duration of each sample.                                                                    | `""`          | `wrk`,`vegeta`   |
+| `path`           | `string`         | Scenario endpoint path, for example: `/1024.html`, `/2048.html`.                            | `""`          | `wrk`,`vegeta`   |
+| `concurrency`    | `int32`          | Number of clients that will concurrently run the benchmark scenario.                        | `0`           | `wrk`,`vegeta`   |
+| `tool`           | `string`         | Tool to run the benchmark scenario.                                                         | `""`          | `wrk`,`vegeta`   |
+| `serverReplicas` | `int32`          | Number of server (nginx) replicas backed by the routes.                                     | `0`           | `wrk`,`vegeta`   |
+| `tuningPatch`    | `string`         | Defines a JSON merge tuning patch for the default `IngressController` object.               | `""`          | `wrk`,`vegeta`   |
+| `delay`          | `time.Duration`  | Delay between samples.                                                                      | `0s`          | `wrk`,`vegeta`   |
+| `warmup`         | `bool`           | Enables warmup: indexing will be disabled in this scenario.                                 | `false`       | `wrk`,`vegeta`   |
+| `requestTimeout` | `time.Duration`  | Request timeout                                                                             | `1s`          | `wrk`,`vegeta`   |
+| `procs`          | `int`            | Number of processes to trigger in each of the client pods                                   | `1`           | `wrk`,`vegeta`   |
+| `threads`        | `int`            | Number of threads/workers per process. It only applies when not using fixed number of RPS   | `#cores`      | `vegeta`         |
+| `keepalive`      | `bool`           | Use HTTP keepalived connections                                                             | `true`        | `vegeta`         |
+| `requestRate`    | `int`            | Number of requests per second                                                               | `0` (unlimited) | `vegeta`|
 
 ## Supported tools
 
-- wrk: HTTP benchmarking tool. https://github.com/wg/wrk
+- wrk: HTTP benchmarking tool. <https://github.com/wg/wrk>. amd64, arm64, ppc64le, s390x
+- vegeta: It's over 9000!. <https://github.com/tsenart/vegeta>. amd4
 
 ## Running
 

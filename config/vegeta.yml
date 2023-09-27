@@ -1,0 +1,14 @@
+# vim: expandtab shiftwidth=2 softtabstop=2
+
+- termination: http
+  connections: 200
+  samples: 1
+  duration: 30s
+  path: /128.html
+  concurrency: 2
+  tool: vegeta
+  serverReplicas: 9
+  requestTimeout: 2s
+  warmup: false
+  keepalive: false
+  threads: 50
