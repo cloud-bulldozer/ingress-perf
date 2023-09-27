@@ -78,6 +78,7 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 		return err
 	}
 	clusterMetadata.HAProxyVersion, err = getHAProxyVersion()
+	log.Infof("HAProxy version: %s", clusterMetadata.HAProxyVersion)
 	if err != nil {
 		return err
 	}
