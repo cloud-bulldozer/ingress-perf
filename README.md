@@ -30,7 +30,7 @@ Ingress-perf configuration is defined in a YAML file, holding an array of the fo
 ## Supported tools
 
 - wrk: HTTP benchmarking tool. <https://github.com/wg/wrk>. amd64, arm64, ppc64le, s390x
-- vegeta: It's over 9000!. <https://github.com/tsenart/vegeta>. amd4
+- vegeta: It's over 9000!. <https://github.com/tsenart/vegeta>. amd64
 
 ## Running
 
