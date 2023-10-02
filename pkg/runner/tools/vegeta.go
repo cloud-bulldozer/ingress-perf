@@ -32,15 +32,20 @@ func init() {
 
 func Vegeta(cfg config.Config, ep string) Tool {
 	endpoint := fmt.Sprintf("echo GET %v", ep)
-	vegetaCmd := fmt.Sprintf("vegeta attack -insecure -max-connections=%d -duration=%v -timeout=%v -keepalive=%v", cfg.Connections, cfg.Duration, cfg.RequestTimeout, cfg.Keepalive)
+	vegetaCmd := fmt.Sprintf("vegeta attack -insecure -max-connections=%d -duration=%v -timeout=%v -keepalive=%v -max-body=0",
+		cfg.Connections,
+		cfg.Duration,
+		cfg.RequestTimeout,
+		cfg.Keepalive,
+	)
 	if cfg.RequestRate > 0 {
-		vegetaCmd += fmt.Sprintf(" -rate %d", cfg.RequestRate)
+		vegetaCmd += fmt.Sprintf(" -rate=%d", cfg.RequestRate)
 	} else {
 		vegetaCmd += fmt.Sprintf(" -rate=0 -workers=%d -max-workers=%d", cfg.Threads, cfg.Threads)
 	}
 
 	newWrk := &vegeta{
-		cmd: []string{"bash", "-c", fmt.Sprintf("%v | %v > /tmp/result; vegeta report -type json /tmp/result", endpoint, vegetaCmd)},
+		cmd: []string{"bash", "-c", fmt.Sprintf("%v | %v | vegeta report -type json", endpoint, vegetaCmd)},
 		res: VegetaResult{},
 	}
 	return newWrk

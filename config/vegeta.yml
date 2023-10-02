@@ -1,14 +1,65 @@
-# vim: expandtab shiftwidth=2 softtabstop=2
+# vi: expandtab shiftwidth=2 softtabstop=2
+
+# First scenario is configured as warmup and it will also tune the default ingress-controller to assign the router pods to the infra nodes
+- termination: http
+  connections: 400
+  samples: 5
+  duration: 2m
+  path: /256.html
+  concurrency: 9
+  tool: vegeta
+  serverReplicas: 45
+  tuningPatch: '{"spec":{"nodePlacement": {"nodeSelector": {"matchLabels": {"node-role.kubernetes.io/infra": ""}}}, "replicas": 2}}'
+  delay: 10s
+  threads: 400
+  requestTimeout: 10s
+  warmup: true
+
+- termination: reencrypt
+  connections: 400
+  samples: 2
+  duration: 2m
+  path: /256.html
+  concurrency: 9
+  tool: vegeta
+  serverReplicas: 45
+  threads: 400
+  requestTimeout: 10s
+  delay: 10s
 
 - termination: http
-  connections: 200
-  samples: 1
-  duration: 30s
-  path: /128.html
-  concurrency: 2
+  connections: 400
+  samples: 2
+  duration: 2m
+  path: /256.html
+  concurrency: 9
   tool: vegeta
-  serverReplicas: 9
-  requestTimeout: 2s
-  warmup: false
-  keepalive: false
-  threads: 50
+  serverReplicas: 45
+  threads: 400
+  requestTimeout: 10s
+  delay: 10s
+
+- termination: edge
+  connections: 400
+  samples: 2
+  duration: 2m
+  path: /256.html
+  concurrency: 9
+  tool: vegeta
+  serverReplicas: 45
+  threads: 400
+  requestTimeout: 10s
+  delay: 10s
+
+
+- termination: passthrough
+  connections: 400
+  samples: 2
+  duration: 2m
+  path: /256.html
+  concurrency: 9
+  tool: vegeta
+  serverReplicas: 45
+  threads: 400
+  requestTimeout: 10s
+  delay: 10s
