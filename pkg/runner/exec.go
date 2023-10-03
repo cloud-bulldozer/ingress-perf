@@ -145,12 +145,14 @@ func exec(ctx context.Context, tool tools.Tool, pod corev1.Pod, result *tools.Re
 		Stderr: &stderr,
 	})
 	if err != nil {
-		log.Errorf("Exec failed in pod %s: %v", pod.Name, err.Error())
+		log.Errorf("Exec failed in pod %s: %v, stderr: %v", pod.Name, err.Error(), stderr.String())
 		return err
 	}
 	podResult, err := tool.ParseResult(stdout.String(), stderr.String())
 	if err != nil {
 		log.Errorf("Result parsing failed: %v", err.Error())
+		log.Errorf("Stdout: %v", stdout.String())
+		log.Errorf("Stderr: %v", stderr.String())
 		return err
 	}
 	podResult.Name = pod.Name
