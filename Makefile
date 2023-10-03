@@ -17,7 +17,7 @@ BIN_NAME = ingress-perf
 BIN_PATH = $(BIN_DIR)/$(BIN_NAME)
 SOURCES = $(shell find . -type f -name "*.go")
 CGO = 0
-VEGETA_VERSION := 12.11.0
+VEGETA_VERSION := 12.11.1
 
 .PHONY: build lint clean
 

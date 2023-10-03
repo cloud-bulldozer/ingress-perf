@@ -51,7 +51,6 @@
   requestTimeout: 10s
   delay: 10s
 
-
 - termination: passthrough
   connections: 400
   samples: 2
