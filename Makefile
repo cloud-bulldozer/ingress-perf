@@ -27,7 +27,7 @@ build: $(BIN_PATH)
 $(BIN_PATH): $(SOURCES)
 	GOARCH=$(shell go env GOARCH) CGO_ENABLED=$(CGO) go build -v -ldflags "-X $(INGRESS_PERF_VERSION).GitCommit=$(GIT_COMMIT) -X $(INGRESS_PERF_VERSION).Version=$(VERSION) -X $(INGRESS_PERF_VERSION).BuildDate=$(BUILD_DATE)" -o $(BIN_PATH) cmd/ingress-perf.go
 
-container-build: build
+container-build:
 	@echo "Building the container image"
 	$(CONTAINER_BUILD) -f containers/Containerfile \
 	-t $(CONTAINER_NS)/$(BIN_NAME) ./containers

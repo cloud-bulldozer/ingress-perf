@@ -30,8 +30,7 @@ const (
 	benchmarkNs = "ingress-perf"
 	serverImage = "quay.io/cloud-bulldozer/nginx:latest"
 	serverName  = "nginx"
-	//clientImage = "quay.io/cloud-bulldozer/ingress-toolbox:latest"
-	clientImage = "quay.io/cloud-bulldozer/wrk:latest"
+	clientImage = "quay.io/cloud-bulldozer/ingress-perf:latest"
 	clientName  = "ingress-perf-client"
 )
 
