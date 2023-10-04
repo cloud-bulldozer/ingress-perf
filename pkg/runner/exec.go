@@ -75,7 +75,6 @@ func runBenchmark(cfg config.Config, clusterMetadata tools.ClusterMetadata) ([]t
 		for _, pod := range clientPods {
 			for i := 0; i < cfg.Procs; i++ {
 				func(p corev1.Pod) {
-					log.Debugf("Running %v in client pods", tool.Cmd())
 					errGroup.Go(func() error {
 						if cfg.Termination == "http" {
 							ep = fmt.Sprintf("http://%v%v", r.Spec.Host, cfg.Path)
