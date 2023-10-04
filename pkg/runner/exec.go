@@ -41,17 +41,7 @@ func runBenchmark(cfg config.Config, clusterMetadata tools.ClusterMetadata) ([]t
 	var benchmarkResult []tools.Result
 	var clientPods []corev1.Pod
 	var ep string
-	var tool tools.Tool
 	r, err := orClientSet.RouteV1().Routes(benchmarkNs).Get(context.TODO(), fmt.Sprintf("%s-%s", serverName, cfg.Termination), metav1.GetOptions{})
-	if err != nil {
-		return benchmarkResult, err
-	}
-	if cfg.Termination == "http" {
-		ep = fmt.Sprintf("http://%v%v", r.Spec.Host, cfg.Path)
-	} else {
-		ep = fmt.Sprintf("https://%v%v", r.Spec.Host, cfg.Path)
-	}
-	tool, err = tools.New(cfg, ep)
 	if err != nil {
 		return benchmarkResult, err
 	}
@@ -86,6 +76,16 @@ func runBenchmark(cfg config.Config, clusterMetadata tools.ClusterMetadata) ([]t
 			for i := 0; i < cfg.Procs; i++ {
 				func(p corev1.Pod) {
 					errGroup.Go(func() error {
+						if cfg.Termination == "http" {
+							ep = fmt.Sprintf("http://%v%v", r.Spec.Host, cfg.Path)
+						} else {
+							ep = fmt.Sprintf("https://%v%v", r.Spec.Host, cfg.Path)
+						}
+						tool, err := tools.New(cfg, ep)
+						if err != nil {
+							return err
+						}
+						log.Debugf("Running %v in client pods", tool.Cmd())
 						return exec(context.TODO(), tool, p, &result)
 					})
 				}(pod)

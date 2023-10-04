@@ -23,7 +23,6 @@ import (
 	_ "github.com/cloud-bulldozer/ingress-perf/pkg/log"
 	"github.com/cloud-bulldozer/ingress-perf/pkg/runner"
 	uid "github.com/satori/go.uuid"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -54,11 +53,11 @@ func run() *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			lvl, err := logrus.ParseLevel(logLevel)
+			lvl, err := log.ParseLevel(logLevel)
 			if err != nil {
 				return err
 			}
-			logrus.SetLevel(lvl)
+			log.SetLevel(lvl)
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
