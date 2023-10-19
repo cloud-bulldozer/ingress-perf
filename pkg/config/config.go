@@ -16,6 +16,7 @@ package config
 
 import (
 	"os"
+	"runtime"
 	"time"
 
 	yaml "gopkg.in/yaml.v3"
@@ -28,6 +29,8 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		Warmup:         false, // Disable warmup by default
 		RequestTimeout: time.Second,
 		Procs:          1,
+		Keepalive:      true,
+		Threads:        runtime.NumCPU(), // As many threads as the number of logical CPU cores
 	}
 	if err := unmarshal(&defaultCfg); err != nil {
 		return err

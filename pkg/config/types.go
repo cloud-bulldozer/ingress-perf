@@ -41,9 +41,15 @@ type Config struct {
 	// Tuning defines a tuning patch for the default IngressController object
 	Tuning string `yaml:"tuningPatch" json:"tuningPatch"`
 	// Delay defines a delay between samples
-	Delay time.Duration `yaml:"delay"`
+	Delay time.Duration `yaml:"delay" json:"delay"`
 	// Warmup enables warmup: Indexing will be disabled in this scenario. Default is false
 	Warmup bool `yaml:"warmup" json:"-"`
 	// RequestTimeout defines the tool request timeout
-	RequestTimeout time.Duration `yaml:"requestTimeout"`
+	RequestTimeout time.Duration `yaml:"requestTimeout" json:"requestTimeout"`
+	// RequestRate defines the amount of requests to run in parallel
+	RequestRate int `yaml:"requestRate" json:"requestRate"`
+	// Keepalive use keepalived connections
+	Keepalive bool `yaml:"keepalive" json:"keepalive"`
+	// Defines the number of threads
+	Threads int `yaml:"threads" json:"threads"`
 }
