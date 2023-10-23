@@ -40,7 +40,7 @@ gha-build:
 
 gha-push: gha-build
 	@echo "Publish the Container Images"
-	$(CONTAINER_BUILD) manifest push
+	podman manifest push $(CONTAINER_NS)/$(BIN_NAME):latest
 
 clean:
 	rm -Rf $(BIN_DIR)
