@@ -39,7 +39,7 @@ gha-build:
 	./containers --manifest=$(CONTAINER_NS)/$(BIN_NAME):latest
 
 gha-push: gha-build
-	@echo "Pushing Container Images"
+	@echo "Publish the Container Images"
 	$(CONTAINER_BUILD) manifest push
 
 clean:
