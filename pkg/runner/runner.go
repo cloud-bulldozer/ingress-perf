@@ -242,16 +242,23 @@ func reconcileNs(cfg config.Config) error {
 }
 
 func waitForDeployment(ns, deployment string, maxWaitTimeout time.Duration) error {
-	return wait.PollUntilContextTimeout(context.TODO(), time.Second, maxWaitTimeout, true, func(ctx context.Context) (bool, error) {
+	var errMsg string
+	log.Infof("Waiting for replicas from deployment %s in ns %s to be ready", deployment, ns)
+	err := wait.PollUntilContextTimeout(context.TODO(), time.Second, maxWaitTimeout, true, func(ctx context.Context) (bool, error) {
 		dep, err := clientSet.AppsV1().Deployments(ns).Get(context.TODO(), deployment, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
 		if *dep.Spec.Replicas != dep.Status.ReadyReplicas || *dep.Spec.Replicas != dep.Status.AvailableReplicas {
-			log.Debugf("Waiting for replicas from deployment %s in ns %s to be ready", deployment, ns)
+			errMsg = fmt.Sprintf("%d/%d replicas ready", dep.Status.AvailableReplicas, *dep.Spec.Replicas)
+			log.Debug(errMsg)
 			return false, nil
 		}
 		log.Debugf("%d replicas from deployment %s ready", dep.Status.UpdatedReplicas, deployment)
 		return true, nil
 	})
+	if err != nil && errMsg != "" {
+		log.Error(errMsg)
+	}
+	return err
 }
