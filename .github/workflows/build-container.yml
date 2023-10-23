@@ -1,9 +1,10 @@
-name: Release ingress-netperf container image
+name: Release ingress-perf container image
 
 on:
   push:
     paths:
-      - "containers/**" # Trigger only when Dockerfile changes in a pull request
+      - "containers/**"
+      - Makefile
 
 env:
   CONTAINER_REGISTRY: ${{ 'quay.io' }}
