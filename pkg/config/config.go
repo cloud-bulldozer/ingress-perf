@@ -28,6 +28,7 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		Warmup:            false, // Disable warmup by default
 		RequestTimeout:    time.Second,
 		Procs:             1,
+		Keepalive:         true,
 		PrometheusMetrics: prometheusQueries,
 	}
 	if err := unmarshal(&defaultCfg); err != nil {
