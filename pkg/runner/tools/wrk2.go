@@ -21,27 +21,27 @@ import (
 	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
 )
 
-type wrk struct {
+type wrk2 struct {
 	cmd []string
 	res PodResult
 }
 
 func init() {
-	toolMap["wrk"] = Wrk
+	toolMap["wrk2"] = Wrk2
 }
 
-func Wrk(cfg config.Config, ep string) Tool {
-	newWrk := &wrk{
-		cmd: []string{"wrk", "-s", "json.lua", "-c", fmt.Sprint(cfg.Connections), "-d", fmt.Sprintf("%v", cfg.Duration.Seconds()), ep, "--timeout", fmt.Sprintf("%v", cfg.RequestTimeout.Seconds())},
+func Wrk2(cfg config.Config, ep string) Tool {
+	newWrk := &wrk2{
+		cmd: []string{"wrk2", "-R", fmt.Sprint(cfg.RequestRate), "-s", "json.lua", "-c", fmt.Sprint(cfg.Connections), "-d", fmt.Sprintf("%v", cfg.Duration.Seconds()), ep, "--timeout", fmt.Sprintf("%v", cfg.RequestTimeout.Seconds())},
 		res: PodResult{},
 	}
 	return newWrk
 }
 
-func (w *wrk) Cmd() []string {
+func (w *wrk2) Cmd() []string {
 	return w.cmd
 }
 
-func (w *wrk) ParseResult(_, stderr string) (PodResult, error) {
+func (w *wrk2) ParseResult(_, stderr string) (PodResult, error) {
 	return w.res, json.Unmarshal([]byte(stderr), &w.res)
 }

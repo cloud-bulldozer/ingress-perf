@@ -46,4 +46,6 @@ type Config struct {
 	Warmup bool `yaml:"warmup" json:"-"`
 	// RequestTimeout defines the tool request timeout
 	RequestTimeout time.Duration `yaml:"requestTimeout"`
+	// RequestRate defines the amount of requests to run in parallel
+	RequestRate int `yaml:"requestRate"`
 }
