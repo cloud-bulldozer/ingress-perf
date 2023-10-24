@@ -225,7 +225,7 @@ func reconcileNs(cfg config.Config) error {
 		if err != nil {
 			return err
 		}
-		if d.Spec.Replicas == &replicas {
+		if *d.Spec.Replicas == replicas {
 			return nil
 		}
 		deployment.Spec.Replicas = &replicas
