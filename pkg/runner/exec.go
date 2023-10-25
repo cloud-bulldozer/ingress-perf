@@ -189,6 +189,9 @@ func genResultSummary(result *tools.Result) {
 		result.P90Latency += pod.P90Latency
 		result.P95Latency += pod.P95Latency
 		result.P99Latency += pod.P99Latency
+		for code, count := range pod.StatusCodes {
+			result.StatusCodes[code] += count
+		}
 	}
 	pods := float64(len(result.Pods))
 	result.StdevRps = result.StdevRps / pods

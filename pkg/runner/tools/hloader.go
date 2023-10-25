@@ -39,8 +39,8 @@ func HLoader(cfg config.Config, ep string) Tool {
 			"-d", fmt.Sprint(cfg.Duration),
 			"-r", strconv.Itoa(cfg.RequestRate),
 			"-t", fmt.Sprint(cfg.RequestTimeout),
-			"-k", strconv.FormatBool(cfg.Keepalive),
-			"--http2", strconv.FormatBool(cfg.HTTP2),
+			fmt.Sprintf("--keepalive=%v", cfg.Keepalive),
+			fmt.Sprintf("--http2=%v", cfg.HTTP2),
 		},
 		res: PodResult{},
 	}

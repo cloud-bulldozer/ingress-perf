@@ -73,5 +73,6 @@ type Result struct {
 	Requests     int64         `json:"requests"`
 	Timeouts     int64         `json:"timeouts"`
 	Version      string        `json:"version"`
+	StatusCodes  map[int]int64 `json:"status_codes"`
 	ClusterMetadata
 }
