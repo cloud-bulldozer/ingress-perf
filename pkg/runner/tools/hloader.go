@@ -17,6 +17,7 @@ package tools
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
 )
@@ -31,14 +32,15 @@ func init() {
 }
 
 func HLoader(cfg config.Config, ep string) Tool {
+
 	newHLoader := &hLoader{
 		cmd: []string{"hloader", "-u", ep,
-			"-c", fmt.Sprint(cfg.Connections),
+			"-c", strconv.Itoa(cfg.Connections),
 			"-d", fmt.Sprint(cfg.Duration),
-			"-r", fmt.Sprint(cfg.RequestRate),
+			"-r", strconv.Itoa(cfg.RequestRate),
 			"-t", fmt.Sprint(cfg.RequestTimeout),
-			"-k", fmt.Sprint(cfg.Keepalive),
-			"--http2", fmt.Sprint(cfg.HTTP2),
+			"-k", strconv.FormatBool(cfg.Keepalive),
+			"--http2", strconv.FormatBool(cfg.HTTP2),
 		},
 		res: PodResult{},
 	}

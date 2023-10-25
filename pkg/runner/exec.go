@@ -186,9 +186,9 @@ func genResultSummary(result *tools.Result) {
 		if pod.MaxLatency > result.MaxLatency {
 			result.MaxLatency = pod.MaxLatency
 		}
-		result.P90Latency += float64(pod.P90Latency)
-		result.P95Latency += float64(pod.P95Latency)
-		result.P99Latency += float64(pod.P99Latency)
+		result.P90Latency += pod.P90Latency
+		result.P95Latency += pod.P95Latency
+		result.P99Latency += pod.P99Latency
 	}
 	pods := float64(len(result.Pods))
 	result.StdevRps = result.StdevRps / pods

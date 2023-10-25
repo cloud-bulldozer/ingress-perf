@@ -2,99 +2,87 @@
 
 # First sample is set as warmup and also will tune the default ingress-controller to place the routers on infra nodes
 - termination: http
-  connections: 20
-  samples: 1
-  duration: 1m
-  path: /1024.html
-  concurrency: 1
-  tool: wrk
-  serverReplicas: 90
-  requestTimeout: 2s
-  tuningPatch: '{"spec":{"nodePlacement": {"nodeSelector": {"matchLabels": {"node-role.kubernetes.io/infra": ""}}}, "replicas": 2}}'
-  warmup: true
-
-- termination: http
   connections: 200
   samples: 2
-  duration: 2m
+  duration: 10s
   path: /1024.html
-  concurrency: 1
-  tool: wrk
-  serverReplicas: 90
-  delay: 10s
-  procs: 2
+  concurrency: 3
+  tool: hloader
+  serverReplicas: 30
+  delay: 5s
+  procs: 1
 
 - termination: edge
   connections: 200
   samples: 2
-  duration: 2m
+  duration: 10s
   path: /1024.html
-  concurrency: 1
-  tool: wrk
-  serverReplicas: 90
-  delay: 10s
-  procs: 2
+  concurrency: 4
+  tool: hloader
+  serverReplicas: 30
+  delay: 30s
+  procs: 1
 
 - termination: reencrypt
   connections: 200
   samples: 2
-  duration: 2m
+  duration: 30s
   path: /1024.html
-  concurrency: 1
-  tool: wrk
-  serverReplicas: 90
-  delay: 10s
-  procs: 2
+  concurrency: 3
+  tool: hloader
+  serverReplicas: 30
+  delay: 30s
+  procs: 1
 
 - termination: passthrough
   connections: 200
   samples: 2
-  duration: 2m
+  duration: 30s
   path: /1024.html
-  concurrency: 1
-  tool: wrk
-  serverReplicas: 90
-  delay: 10s
-  procs: 2
+  concurrency: 3
+  tool: hloader
+  serverReplicas: 30
+  delay: 30s
+  procs: 1
 
 - termination: http
   connections: 200
   samples: 2
-  duration: 2m
+  duration: 30s
   path: /1024.html
-  concurrency: 20
-  tool: wrk
-  serverReplicas: 90
-  delay: 10s
+  concurrency: 3
+  tool: hloader
+  serverReplicas: 30
+  delay: 30s
 
 - termination: edge
   connections: 200
   samples: 2
-  duration: 2m
+  duration: 30s
   path: /1024.html
-  concurrency: 20
-  tool: wrk
-  serverReplicas: 90
-  delay: 10s
+  concurrency: 3
+  tool: hloader
+  serverReplicas: 30
+  delay: 30s
 
 - termination: reencrypt
   connections: 200
   samples: 2
-  duration: 2m
+  duration: 30s
   path: /1024.html
-  concurrency: 20
-  tool: wrk
-  serverReplicas: 90
-  delay: 10s
+  concurrency: 3
+  tool: hloader
+  serverReplicas: 30
+  delay: 30s
 
 - termination: passthrough
   connections: 200
   samples: 2
-  duration: 2m
+  duration: 30s
   path: /1024.html
-  concurrency: 20
-  tool: wrk
-  serverReplicas: 90
-  delay: 10s
+  concurrency: 3
+  tool: hloader
+  serverReplicas: 30
+  delay: 30s
 
 

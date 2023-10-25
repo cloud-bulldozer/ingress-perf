@@ -7,3 +7,4 @@ FROM registry.access.redhat.com/ubi8/ubi:latest
 RUN dnf install -y iproute procps-ng
 COPY --from=builder /wrk/wrk /usr/bin/wrk
 COPY json.lua json.lua
+COPY hloader /usr/bin/hloader
