@@ -1,5 +1,7 @@
 # ingress-perf - OCP Ingress Performance
 
+[![Release Go project](https://github.com/cloud-bulldozer/ingress-perf/actions/workflows/release.yml/badge.svg)](https://github.com/cloud-bulldozer/ingress-perf/actions/workflows/release.yml)
+
 OCP Ingress performance ultimate tool!
 
 ![diagram](doc-assets/diagram.png)
