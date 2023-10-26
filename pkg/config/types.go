@@ -34,16 +34,16 @@ type Config struct {
 	Concurrency int32 `yaml:"concurrency" json:"concurrency"`
 	// Procs processes per client pod
 	Procs int `yaml:"procs" json:"procs"`
-	// Tool defines the tool to run the benchmark scenario
+	// Tool defines the tool to run the benchmark scenario. Example: wrk
 	Tool string `yaml:"tool" json:"tool"`
-	// ServerReplicas number of server (nginx) replicas backed by the routes. Example: wrk
+	// ServerReplicas number of server (nginx) replicas backed by the routes
 	ServerReplicas int32 `yaml:"serverReplicas" json:"serverReplicas"`
 	// Tuning defines a tuning patch for the default IngressController object
 	Tuning string `yaml:"tuningPatch" json:"tuningPatch"`
 	// Delay defines a delay between samples
-	Delay time.Duration `yaml:"delay"`
+	Delay time.Duration `yaml:"delay" json:"delay"`
 	// Warmup enables warmup: Indexing will be disabled in this scenario. Default is false
 	Warmup bool `yaml:"warmup" json:"-"`
 	// RequestTimeout defines the tool request timeout
-	RequestTimeout time.Duration `yaml:"requestTimeout"`
+	RequestTimeout time.Duration `yaml:"requestTimeout" json:"requestTimeout"`
 }

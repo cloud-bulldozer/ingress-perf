@@ -92,7 +92,7 @@ func runBenchmark(cfg config.Config, clusterMetadata tools.ClusterMetadata) ([]t
 			}
 		}
 		if err = errGroup.Wait(); err != nil {
-			log.Error("Errors found during execution, skipping sample")
+			log.Errorf("Errors found during execution, skipping sample: %s", err)
 			continue
 		}
 		genResultSummary(&result)

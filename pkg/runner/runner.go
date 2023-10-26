@@ -269,7 +269,7 @@ func waitForDeployment(ns, deployment string, maxWaitTimeout time.Duration) erro
 		for _, pod := range failedPods.Items {
 			for _, cs := range pod.Status.ContainerStatuses {
 				if cs.State.Waiting != nil {
-					log.Errorf("%v: %v", pod.Name, cs.State.Waiting.Message)
+					log.Errorf("%v@%v: %v", pod.Name, pod.Spec.NodeName, cs.State.Waiting.Message)
 				}
 			}
 		}
