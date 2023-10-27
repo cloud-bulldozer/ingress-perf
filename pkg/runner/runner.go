@@ -32,6 +32,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
@@ -225,7 +226,7 @@ func reconcileNs(cfg config.Config) error {
 		if err != nil {
 			return err
 		}
-		if *d.Spec.Replicas == replicas {
+		if d.Status.ReadyReplicas == replicas {
 			return nil
 		}
 		deployment.Spec.Replicas = &replicas
@@ -243,9 +244,11 @@ func reconcileNs(cfg config.Config) error {
 
 func waitForDeployment(ns, deployment string, maxWaitTimeout time.Duration) error {
 	var errMsg string
+	var dep *appsv1.Deployment
+	var err error
 	log.Infof("Waiting for replicas from deployment %s in ns %s to be ready", deployment, ns)
-	err := wait.PollUntilContextTimeout(context.TODO(), time.Second, maxWaitTimeout, true, func(ctx context.Context) (bool, error) {
-		dep, err := clientSet.AppsV1().Deployments(ns).Get(context.TODO(), deployment, metav1.GetOptions{})
+	err = wait.PollUntilContextTimeout(context.TODO(), time.Second, maxWaitTimeout, true, func(ctx context.Context) (bool, error) {
+		dep, err = clientSet.AppsV1().Deployments(ns).Get(context.TODO(), deployment, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -259,6 +262,17 @@ func waitForDeployment(ns, deployment string, maxWaitTimeout time.Duration) erro
 	})
 	if err != nil && errMsg != "" {
 		log.Error(errMsg)
+		failedPods, _ := clientSet.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{
+			FieldSelector: "status.phase=Pending",
+			LabelSelector: labels.SelectorFromSet(dep.Spec.Selector.MatchLabels).String(),
+		})
+		for _, pod := range failedPods.Items {
+			for _, cs := range pod.Status.ContainerStatuses {
+				if cs.State.Waiting != nil {
+					log.Errorf("%v@%v: %v", pod.Name, pod.Spec.NodeName, cs.State.Waiting.Message)
+				}
+			}
+		}
 	}
 	return err
 }
