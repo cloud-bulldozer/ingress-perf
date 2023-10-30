@@ -41,9 +41,9 @@ type PodResult struct {
 	StdevLatency float64 `json:"stdev_lat"`
 	AvgLatency   float64 `json:"avg_lat_us"`
 	MaxLatency   float64 `json:"max_lat_us"`
-	P90Latency   int64   `json:"p90_lat_us"`
-	P95Latency   int64   `json:"p95_lat_us"`
-	P99Latency   int64   `json:"p99_lat_us"`
+	P90Latency   float64 `json:"p90_lat_us"`
+	P95Latency   float64 `json:"p95_lat_us"`
+	P99Latency   float64 `json:"p99_lat_us"`
 	HTTPErrors   int64   `json:"http_errors"`
 	ReadErrors   int64   `json:"read_errors"`
 	WriteErrors  int64   `json:"write_errors"`

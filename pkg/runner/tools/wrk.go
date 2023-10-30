@@ -17,6 +17,7 @@ package tools
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
 )
@@ -32,7 +33,7 @@ func init() {
 
 func Wrk(cfg config.Config, ep string) Tool {
 	newWrk := &wrk{
-		cmd: []string{"wrk", "-s", "json.lua", "-c", fmt.Sprint(cfg.Connections), "-d", fmt.Sprintf("%v", cfg.Duration.Seconds()), "--latency", ep, "--timeout", fmt.Sprintf("%v", cfg.RequestTimeout.Seconds())},
+		cmd: []string{"wrk", "-s", "json.lua", "-c", strconv.Itoa(cfg.Connections), "-d", fmt.Sprintf("%v", cfg.Duration.Seconds()), "--latency", ep, "--timeout", fmt.Sprintf("%v", cfg.RequestTimeout.Seconds())},
 		res: PodResult{},
 	}
 	return newWrk
