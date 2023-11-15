@@ -52,24 +52,25 @@ type PodResult struct {
 }
 
 type Result struct {
-	UUID         string        `json:"uuid"`
-	Sample       int           `json:"sample"`
-	Config       config.Config `json:"config"`
-	Pods         []PodResult   `json:"pods"`
-	Timestamp    time.Time     `json:"timestamp"`
-	TotalAvgRps  float64       `json:"total_avg_rps"`
-	StdevRps     float64       `json:"rps_stdev"`
-	StdevLatency float64       `json:"stdev_lat"`
-	AvgLatency   float64       `json:"avg_lat_us"`
-	MaxLatency   float64       `json:"max_lat_us"`
-	P90Latency   float64       `json:"p90_lat_us"`
-	P95Latency   float64       `json:"p95_lat_us"`
-	P99Latency   float64       `json:"p99_lat_us"`
-	HTTPErrors   int64         `json:"http_errors"`
-	ReadErrors   int64         `json:"read_errors"`
-	WriteErrors  int64         `json:"write_errors"`
-	Requests     int64         `json:"requests"`
-	Timeouts     int64         `json:"timeouts"`
-	Version      string        `json:"version"`
+	UUID         string             `json:"uuid"`
+	Sample       int                `json:"sample"`
+	Config       config.Config      `json:"config"`
+	Pods         []PodResult        `json:"pods"`
+	Timestamp    time.Time          `json:"timestamp"`
+	TotalAvgRps  float64            `json:"total_avg_rps"`
+	StdevRps     float64            `json:"rps_stdev"`
+	StdevLatency float64            `json:"stdev_lat"`
+	AvgLatency   float64            `json:"avg_lat_us"`
+	MaxLatency   float64            `json:"max_lat_us"`
+	P90Latency   float64            `json:"p90_lat_us"`
+	P95Latency   float64            `json:"p95_lat_us"`
+	P99Latency   float64            `json:"p99_lat_us"`
+	HTTPErrors   int64              `json:"http_errors"`
+	ReadErrors   int64              `json:"read_errors"`
+	WriteErrors  int64              `json:"write_errors"`
+	Requests     int64              `json:"requests"`
+	Timeouts     int64              `json:"timeouts"`
+	Version      string             `json:"version"`
+	InfraMetrics map[string]float64 `json:"infra_metrics"`
 	ClusterMetadata
 }
