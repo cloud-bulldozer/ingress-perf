@@ -17,7 +17,6 @@ package main
 import (
 	"fmt"
 
-	"github.com/cloud-bulldozer/go-commons/indexers"
 	"github.com/cloud-bulldozer/go-commons/version"
 	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
 	_ "github.com/cloud-bulldozer/ingress-perf/pkg/log"
@@ -45,7 +44,7 @@ var versionCmd = &cobra.Command{
 
 func run() *cobra.Command {
 	var cfg, uuid, baseUUID, esServer, esIndex, logLevel, baseIndex, outputDir string
-	var cleanup bool
+	var cleanup, podMetrics bool
 	var tolerancy int
 	cmd := &cobra.Command{
 		Use:           "run",
@@ -61,37 +60,16 @@ func run() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var indexer *indexers.Indexer
-			var err error
 			log.Infof("Running ingress-perf (%s@%s) with uuid %s", version.Version, version.GitCommit, uuid)
 			if err := config.Load(cfg); err != nil {
 				return err
 			}
-			if baseUUID != "" && (tolerancy > 100 || tolerancy < 1) {
-				return fmt.Errorf("tolerancy is an integer between 1 and 100")
-			}
-			if esServer != "" || outputDir != "" {
-				var indexerCfg indexers.IndexerConfig
-				if esServer != "" {
-					log.Infof("Creating %s indexer", indexers.ElasticIndexer)
-					indexerCfg = indexers.IndexerConfig{
-						Type:    indexers.ElasticIndexer,
-						Servers: []string{esServer},
-						Index:   esIndex,
-					}
-				} else if outputDir != "" {
-					log.Infof("Creating %s indexer", indexers.LocalIndexer)
-					indexerCfg = indexers.IndexerConfig{
-						Type:             indexers.LocalIndexer,
-						MetricsDirectory: outputDir,
-					}
-				}
-				indexer, err = indexers.NewIndexer(indexerCfg)
-				if err != nil {
-					return err
-				}
-			}
-			return runner.Start(uuid, baseUUID, baseIndex, tolerancy, indexer, cleanup)
+			r := runner.New(
+				uuid, cleanup,
+				runner.WithComparison(baseUUID, baseIndex, tolerancy),
+				runner.WithIndexer(esServer, esIndex, outputDir, podMetrics),
+			)
+			return r.Start()
 		},
 	}
 	cmd.Flags().StringVarP(&cfg, "cfg", "c", "", "Configuration file")
@@ -103,6 +81,7 @@ func run() *cobra.Command {
 	cmd.Flags().StringVar(&esIndex, "es-index", "ingress-performance", "Elasticsearch index")
 	cmd.Flags().StringVar(&outputDir, "output-dir", "output", "Store collected metrics in this directory")
 	cmd.Flags().BoolVar(&cleanup, "cleanup", true, "Cleanup benchmark assets")
+	cmd.Flags().BoolVar(&podMetrics, "pod-metrics", false, "Index per pod metrics")
 	cmd.Flags().StringVar(&logLevel, "loglevel", "info", "Log level. Allowed levels are error, info and debug")
 	cmd.MarkFlagRequired("cfg")
 	return cmd

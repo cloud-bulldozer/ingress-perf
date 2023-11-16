@@ -17,6 +17,7 @@ package runner
 import (
 	"fmt"
 
+	"github.com/cloud-bulldozer/go-commons/indexers"
 	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -33,6 +34,18 @@ const (
 	clientImage = "quay.io/cloud-bulldozer/ingress-perf:latest"
 	clientName  = "ingress-perf-client"
 )
+
+type Runner struct {
+	uuid       string
+	baseUUID   string
+	baseIndex  string
+	tolerancy  int
+	indexer    *indexers.Indexer
+	podMetrics bool
+	cleanup    bool
+}
+
+type OptsFunctions func(r *Runner)
 
 var workerAffinity = &corev1.Affinity{
 	NodeAffinity: &corev1.NodeAffinity{

@@ -50,13 +50,64 @@ var dynamicClient *dynamic.DynamicClient
 var orClientSet *openshiftrouteclientset.Clientset
 var currentTuning string
 
-func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.Indexer, cleanupAssets bool) error {
-	var benchmarkResultDocuments []interface{}
+func New(uuid string, cleanup bool, opts ...OptsFunctions) *Runner {
+	r := &Runner{
+		uuid:    uuid,
+		cleanup: cleanup,
+	}
+	for _, opts := range opts {
+		opts(r)
+	}
+	return r
+}
+
+func WithComparison(baseUUID, baseIndex string, tolerancy int) OptsFunctions {
+	return func(r *Runner) {
+		if baseUUID != "" {
+			if tolerancy > 100 || tolerancy < 1 {
+				log.Fatalf("Tolerancy must be an integer between 1 and 100: %d", tolerancy)
+			}
+			r.baseUUID = baseUUID
+			r.tolerancy = tolerancy
+			r.baseIndex = baseIndex
+		}
+	}
+}
+func WithIndexer(esServer, esIndex, resultsDir string, podMetrics bool) OptsFunctions {
+	return func(r *Runner) {
+		if esServer != "" || resultsDir != "" {
+			var indexerCfg indexers.IndexerConfig
+			if esServer != "" {
+				log.Infof("Creating %s indexer", indexers.ElasticIndexer)
+				indexerCfg = indexers.IndexerConfig{
+					Type:    indexers.ElasticIndexer,
+					Servers: []string{esServer},
+					Index:   esIndex,
+				}
+			} else if resultsDir != "" {
+				log.Infof("Creating %s indexer", indexers.LocalIndexer)
+				indexerCfg = indexers.IndexerConfig{
+					Type:             indexers.LocalIndexer,
+					MetricsDirectory: resultsDir,
+				}
+			}
+			indexer, err := indexers.NewIndexer(indexerCfg)
+			if err != nil {
+				log.Fatal(err)
+			}
+			r.indexer = indexer
+			r.podMetrics = podMetrics
+		}
+	}
+}
+
+func (r *Runner) Start() error {
 	var err error
 	var kubeconfig string
 	var benchmarkResult []tools.Result
 	var comparator comparison.Comparator
 	var clusterMetadata tools.ClusterMetadata
+	var benchmarkResultDocuments []interface{}
 	passed := true
 	if os.Getenv("KUBECONFIG") != "" {
 		kubeconfig = os.Getenv("KUBECONFIG")
@@ -96,16 +147,16 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 	} else {
 		log.Infof("HAProxy version: %s", clusterMetadata.HAProxyVersion)
 	}
-	if indexer != nil {
-		if _, ok := (*indexer).(*indexers.Elastic); ok {
-			comparator = comparison.NewComparator(*indexers.ESClient, baseIndex)
+	if r.indexer != nil {
+		if _, ok := (*r.indexer).(*indexers.Elastic); ok {
+			comparator = comparison.NewComparator(*indexers.ESClient, r.baseIndex)
 		}
 	}
 	if err := deployAssets(); err != nil {
 		return err
 	}
 	for i, cfg := range config.Cfg {
-		cfg.UUID = uuid
+		cfg.UUID = r.uuid
 		log.Infof("Running test %d/%d", i+1, len(config.Cfg))
 		log.Infof("Tool:%s termination:%v servers:%d concurrency:%d procs:%d connections:%d duration:%v",
 			cfg.Tool,
@@ -125,32 +176,32 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 				return err
 			}
 		}
-		if benchmarkResult, err = runBenchmark(cfg, clusterMetadata, p); err != nil {
+		if benchmarkResult, err = runBenchmark(cfg, clusterMetadata, p, r.podMetrics); err != nil {
 			return err
 		}
-		if indexer != nil {
+		if r.indexer != nil {
 			if !cfg.Warmup {
 				for _, res := range benchmarkResult {
 					benchmarkResultDocuments = append(benchmarkResultDocuments, res)
 				}
-				// When not using the local indexer, clear the documents array revert benchmark
-				if _, ok := (*indexer).(*indexers.Local); !ok {
-					if indexDocuments(*indexer, benchmarkResultDocuments, indexers.IndexingOpts{}) != nil {
+				// When not using local indexer, empty the documents array when all documents after indexing them
+				if _, ok := (*r.indexer).(*indexers.Local); !ok {
+					if indexDocuments(*r.indexer, benchmarkResultDocuments, indexers.IndexingOpts{}) != nil {
 						log.Errorf("Indexing error: %v", err.Error())
 					}
 					benchmarkResultDocuments = []interface{}{}
 				}
-				if baseUUID != "" {
-					log.Infof("Comparing total_avg_rps with baseline: %v in index %s", baseUUID, baseIndex)
+				if r.baseUUID != "" {
+					log.Infof("Comparing total_avg_rps with baseline: %v in index %s", r.baseUUID, r.baseIndex)
 					var totalAvgRps float64
 					query := fmt.Sprintf("uuid.keyword: %s AND config.termination.keyword: %s AND config.concurrency: %d AND config.connections: %d AND config.serverReplicas: %d AND config.path.keyword: \\%s",
-						baseUUID, cfg.Termination, cfg.Concurrency, cfg.Connections, cfg.ServerReplicas, cfg.Path)
+						r.baseUUID, cfg.Termination, cfg.Concurrency, cfg.Connections, cfg.ServerReplicas, cfg.Path)
 					log.Debugf("Query: %s", query)
 					for _, b := range benchmarkResult {
 						totalAvgRps += b.TotalAvgRps
 					}
 					totalAvgRps = totalAvgRps / float64(len(benchmarkResult))
-					msg, err := comparator.Compare("total_avg_rps", query, comparison.Avg, totalAvgRps, tolerancy)
+					msg, err := comparator.Compare("total_avg_rps", query, comparison.Avg, totalAvgRps, r.tolerancy)
 					if err != nil {
 						log.Error(err.Error())
 						passed = false
@@ -163,12 +214,12 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 			}
 		}
 	}
-	if indexer != nil {
-		if err := indexDocuments(*indexer, benchmarkResultDocuments, indexers.IndexingOpts{MetricName: uuid}); err != nil {
+	if r.indexer != nil {
+		if err := indexDocuments(*r.indexer, benchmarkResultDocuments, indexers.IndexingOpts{MetricName: r.uuid}); err != nil {
 			log.Errorf("Indexing error: %v", err.Error())
 		}
 	}
-	if cleanupAssets {
+	if r.cleanup {
 		if cleanup(10*time.Minute) != nil {
 			return err
 		}
