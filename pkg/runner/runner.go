@@ -50,6 +50,7 @@ var orClientSet *openshiftrouteclientset.Clientset
 var currentTuning string
 
 func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.Indexer, cleanupAssets bool) error {
+	var benchmarkResultDocuments []interface{}
 	var err error
 	var kubeconfig string
 	var benchmarkResult []tools.Result
@@ -117,17 +118,16 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 		}
 		if indexer != nil {
 			if !cfg.Warmup {
-				var benchmarkResultDocuments []interface{}
 				for _, res := range benchmarkResult {
 					benchmarkResultDocuments = append(benchmarkResultDocuments, res)
 				}
-				msg, err := (*indexer).Index(benchmarkResultDocuments, indexers.IndexingOpts{
-					MetricName: uuid,
-				})
-				if err != nil {
-					return err
+				// When not using the local indexer, clear the documents array revert benchmark
+				if _, ok := (*indexer).(*indexers.Local); !ok {
+					if indexDocuments(*indexer, benchmarkResultDocuments, indexers.IndexingOpts{}) != nil {
+						log.Errorf("Indexing error: %v", err.Error())
+					}
+					benchmarkResultDocuments = []interface{}{}
 				}
-				log.Info(msg)
 				if baseUUID != "" {
 					log.Infof("Comparing total_avg_rps with baseline: %v in index %s", baseUUID, baseIndex)
 					var totalAvgRps float64
@@ -151,6 +151,11 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 			}
 		}
 	}
+	if indexer != nil {
+		if err := indexDocuments(*indexer, benchmarkResultDocuments, indexers.IndexingOpts{MetricName: uuid}); err != nil {
+			log.Errorf("Indexing error: %v", err.Error())
+		}
+	}
 	if cleanupAssets {
 		if cleanup(10*time.Minute) != nil {
 			return err
@@ -160,6 +165,15 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 		return nil
 	}
 	return fmt.Errorf("some benchmark comparisons failed")
+}
+
+func indexDocuments(indexer indexers.Indexer, documents []interface{}, indexingOpts indexers.IndexingOpts) error {
+	msg, err := indexer.Index(documents, indexingOpts)
+	if err != nil {
+		return err
+	}
+	log.Info(msg)
+	return nil
 }
 
 func cleanup(timeout time.Duration) error {
