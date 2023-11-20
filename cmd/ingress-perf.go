@@ -44,7 +44,7 @@ var versionCmd = &cobra.Command{
 }
 
 func run() *cobra.Command {
-	var cfg, uuid, baseUUID, esServer, esIndex, logLevel, baseIndex, resultsDir string
+	var cfg, uuid, baseUUID, esServer, esIndex, logLevel, baseIndex, outputDir string
 	var cleanup bool
 	var tolerancy int
 	cmd := &cobra.Command{
@@ -70,7 +70,7 @@ func run() *cobra.Command {
 			if baseUUID != "" && (tolerancy > 100 || tolerancy < 1) {
 				return fmt.Errorf("tolerancy is an integer between 1 and 100")
 			}
-			if esServer != "" || resultsDir != "" {
+			if esServer != "" || outputDir != "" {
 				var indexerCfg indexers.IndexerConfig
 				if esServer != "" {
 					log.Infof("Creating %s indexer", indexers.ElasticIndexer)
@@ -79,11 +79,11 @@ func run() *cobra.Command {
 						Servers: []string{esServer},
 						Index:   esIndex,
 					}
-				} else if resultsDir != "" {
+				} else if outputDir != "" {
 					log.Infof("Creating %s indexer", indexers.LocalIndexer)
 					indexerCfg = indexers.IndexerConfig{
 						Type:             indexers.LocalIndexer,
-						MetricsDirectory: resultsDir,
+						MetricsDirectory: outputDir,
 					}
 				}
 				indexer, err = indexers.NewIndexer(indexerCfg)
@@ -101,7 +101,7 @@ func run() *cobra.Command {
 	cmd.Flags().IntVar(&tolerancy, "tolerancy", 20, "Comparison tolerancy, must be an integer between 1 and 100")
 	cmd.Flags().StringVar(&esServer, "es-server", "", "Elastic Search endpoint")
 	cmd.Flags().StringVar(&esIndex, "es-index", "ingress-performance", "Elasticsearch index")
-	cmd.Flags().StringVar(&resultsDir, "results-dir", "", "Collected metrics will be stored in this directory")
+	cmd.Flags().StringVar(&outputDir, "output-dir", "output", "Store collected metrics in this directory")
 	cmd.Flags().BoolVar(&cleanup, "cleanup", true, "Cleanup benchmark assets")
 	cmd.Flags().StringVar(&logLevel, "loglevel", "info", "Log level. Allowed levels are error, info and debug")
 	cmd.MarkFlagRequired("cfg")

@@ -95,7 +95,7 @@ func runBenchmark(cfg config.Config, clusterMetadata tools.ClusterMetadata) ([]t
 			log.Errorf("Errors found during execution, skipping sample: %s", err)
 			continue
 		}
-		genResultSummary(&result)
+		normalizeResults(&result)
 		aggAvgRps += result.TotalAvgRps
 		aggAvgLatency += result.AvgLatency
 		aggP99Latency += result.P99Latency
@@ -172,7 +172,7 @@ func exec(ctx context.Context, tool tools.Tool, pod corev1.Pod, result *tools.Re
 	return nil
 }
 
-func genResultSummary(result *tools.Result) {
+func normalizeResults(result *tools.Result) {
 	for _, pod := range result.Pods {
 		result.TotalAvgRps += pod.AvgRps
 		result.StdevRps += pod.StdevRps
