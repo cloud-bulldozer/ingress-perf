@@ -25,9 +25,10 @@ import (
 func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type ConfigDefaulted Config
 	defaultCfg := ConfigDefaulted{
-		Warmup:         false, // Disable warmup by default
-		RequestTimeout: time.Second,
-		Procs:          1,
+		Warmup:            false, // Disable warmup by default
+		RequestTimeout:    time.Second,
+		Procs:             1,
+		PrometheusMetrics: prometheusQueries,
 	}
 	if err := unmarshal(&defaultCfg); err != nil {
 		return err

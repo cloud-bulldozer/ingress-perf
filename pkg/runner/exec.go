@@ -18,12 +18,15 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/cloud-bulldozer/go-commons/prometheus"
 	"github.com/cloud-bulldozer/go-commons/version"
 	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
 	"github.com/cloud-bulldozer/ingress-perf/pkg/runner/tools"
+	"github.com/prometheus/common/model"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
@@ -35,8 +38,8 @@ import (
 
 var lock = &sync.Mutex{}
 
-func runBenchmark(cfg config.Config, clusterMetadata tools.ClusterMetadata) ([]tools.Result, error) {
-	var aggAvgRps, aggAvgLatency, aggP99Latency float64
+func runBenchmark(cfg config.Config, clusterMetadata tools.ClusterMetadata, p *prometheus.Prometheus) ([]tools.Result, error) {
+	var aggAvgRps, aggAvgLatency, aggP95Latency float64
 	var timeouts, httpErrors int64
 	var benchmarkResult []tools.Result
 	var clientPods []corev1.Pod
@@ -62,12 +65,14 @@ func runBenchmark(cfg config.Config, clusterMetadata tools.ClusterMetadata) ([]t
 	}
 	ts := time.Now().UTC()
 	for i := 1; i <= cfg.Samples; i++ {
+		sampleTs := time.Now().UTC()
 		result := tools.Result{
 			UUID:            cfg.UUID,
 			Sample:          i,
 			Config:          cfg,
 			Timestamp:       ts,
 			ClusterMetadata: clusterMetadata,
+			InfraMetrics:    make(map[string]float64),
 		}
 		result.Config.Tuning = currentTuning // It's useful to index the current tuning patch in the all benchmark's documents
 		log.Infof("Running sample %d/%d: %v", i, cfg.Samples, cfg.Duration)
@@ -98,10 +103,28 @@ func runBenchmark(cfg config.Config, clusterMetadata tools.ClusterMetadata) ([]t
 		normalizeResults(&result)
 		aggAvgRps += result.TotalAvgRps
 		aggAvgLatency += result.AvgLatency
-		aggP99Latency += result.P99Latency
+		aggP95Latency += result.P95Latency
 		timeouts += result.Timeouts
 		httpErrors += result.HTTPErrors
-		log.Infof("%s: Rps=%.0f avgLatency=%.0fms P99Latency=%.0fms", cfg.Termination, result.TotalAvgRps, result.AvgLatency/1e3, result.P99Latency/1e3)
+		elapsed := fmt.Sprintf("%ds", int(time.Since(sampleTs).Seconds()))
+		for field, query := range cfg.PrometheusMetrics {
+			promQuery := strings.ReplaceAll(query, "ELAPSED", elapsed)
+			log.Debugf("Running query: %s", promQuery)
+			value, err := p.Query(promQuery, time.Time{}.UTC())
+			if err != nil {
+				log.Errorf("Query error: %v", err)
+				continue
+			}
+			data, ok := value.(model.Vector)
+			if !ok {
+				log.Errorf("Unsupported result format: %s", value.Type().String())
+				continue
+			}
+			for _, vector := range data {
+				result.InfraMetrics[field] = float64(vector.Value)
+			}
+		}
+		log.Infof("%s: Rps=%.0f avgLatency=%.0fms P95Latency=%.0fms", cfg.Termination, result.TotalAvgRps, result.AvgLatency/1e3, result.P95Latency/1e3)
 		benchmarkResult = append(benchmarkResult, result)
 		if cfg.Delay != 0 {
 			log.Info("Sleeping for ", cfg.Delay)
@@ -109,11 +132,11 @@ func runBenchmark(cfg config.Config, clusterMetadata tools.ClusterMetadata) ([]t
 		}
 	}
 	validSamples := float64(len(benchmarkResult))
-	log.Infof("Scenario summary %s: Rps=%.0f avgLatency=%.0fms P99Latency=%.0fms timeouts=%d http_errors=%d",
+	log.Infof("Scenario summary %s: Rps=%.0f avgLatency=%.0fms P95Latency=%.0fms timeouts=%d http_errors=%d",
 		cfg.Termination,
 		aggAvgRps/validSamples,
 		aggAvgLatency/validSamples/1e3,
-		aggP99Latency/validSamples/1e3,
+		aggP95Latency/validSamples/1e3,
 		timeouts,
 		httpErrors,
 	)

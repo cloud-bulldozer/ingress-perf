@@ -23,6 +23,7 @@ import (
 
 	"github.com/cloud-bulldozer/go-commons/comparison"
 	"github.com/cloud-bulldozer/go-commons/indexers"
+	"github.com/cloud-bulldozer/go-commons/prometheus"
 
 	ocpmetadata "github.com/cloud-bulldozer/go-commons/ocp-metadata"
 	"github.com/cloud-bulldozer/ingress-perf/pkg/config"
@@ -80,9 +81,20 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 		return err
 	}
 	clusterMetadata.HAProxyVersion, err = getHAProxyVersion()
-	log.Infof("HAProxy version: %s", clusterMetadata.HAProxyVersion)
+	promURL, promToken, err := ocpMetadata.GetPrometheus()
 	if err != nil {
+		log.Error("Error fetching prometheus information")
 		return err
+	}
+	p, err := prometheus.NewClient(promURL, promToken, "", "", true)
+	if err != nil {
+		log.Error("Error creating prometheus client")
+		return err
+	}
+	if err != nil {
+		log.Errorf("Couldn't fetch haproxy version: %v", err)
+	} else {
+		log.Infof("HAProxy version: %s", clusterMetadata.HAProxyVersion)
 	}
 	if indexer != nil {
 		if _, ok := (*indexer).(*indexers.Elastic); ok {
@@ -113,7 +125,7 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 				return err
 			}
 		}
-		if benchmarkResult, err = runBenchmark(cfg, clusterMetadata); err != nil {
+		if benchmarkResult, err = runBenchmark(cfg, clusterMetadata, p); err != nil {
 			return err
 		}
 		if indexer != nil {
