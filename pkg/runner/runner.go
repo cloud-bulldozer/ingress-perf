@@ -21,7 +21,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/cloud-bulldozer/go-commons/comparison"
 	"github.com/cloud-bulldozer/go-commons/indexers"
 	"github.com/cloud-bulldozer/go-commons/prometheus"
 
@@ -61,36 +60,23 @@ func New(uuid string, cleanup bool, opts ...OptsFunctions) *Runner {
 	return r
 }
 
-func WithComparison(baseUUID, baseIndex string, tolerancy int) OptsFunctions {
-	return func(r *Runner) {
-		if baseUUID != "" {
-			if tolerancy > 100 || tolerancy < 1 {
-				log.Fatalf("Tolerancy must be an integer between 1 and 100: %d", tolerancy)
-			}
-			r.baseUUID = baseUUID
-			r.tolerancy = tolerancy
-			r.baseIndex = baseIndex
-		}
-	}
-}
 func WithIndexer(esServer, esIndex, resultsDir string, podMetrics bool) OptsFunctions {
 	return func(r *Runner) {
 		if esServer != "" || resultsDir != "" {
 			var indexerCfg indexers.IndexerConfig
 			if esServer != "" {
-				log.Infof("Creating %s indexer", indexers.ElasticIndexer)
 				indexerCfg = indexers.IndexerConfig{
 					Type:    indexers.ElasticIndexer,
 					Servers: []string{esServer},
 					Index:   esIndex,
 				}
 			} else if resultsDir != "" {
-				log.Infof("Creating %s indexer", indexers.LocalIndexer)
 				indexerCfg = indexers.IndexerConfig{
 					Type:             indexers.LocalIndexer,
 					MetricsDirectory: resultsDir,
 				}
 			}
+			log.Infof("Creating %s indexer", indexerCfg.Type)
 			indexer, err := indexers.NewIndexer(indexerCfg)
 			if err != nil {
 				log.Fatal(err)
@@ -105,7 +91,6 @@ func (r *Runner) Start() error {
 	var err error
 	var kubeconfig string
 	var benchmarkResult []tools.Result
-	var comparator comparison.Comparator
 	var clusterMetadata tools.ClusterMetadata
 	var benchmarkResultDocuments []interface{}
 	passed := true
@@ -131,7 +116,6 @@ func (r *Runner) Start() error {
 	if err != nil {
 		return err
 	}
-	clusterMetadata.HAProxyVersion, err = getHAProxyVersion()
 	promURL, promToken, err := ocpMetadata.GetPrometheus()
 	if err != nil {
 		log.Error("Error fetching prometheus information")
@@ -142,15 +126,11 @@ func (r *Runner) Start() error {
 		log.Error("Error creating prometheus client")
 		return err
 	}
+	clusterMetadata.HAProxyVersion, err = getHAProxyVersion()
 	if err != nil {
 		log.Errorf("Couldn't fetch haproxy version: %v", err)
 	} else {
 		log.Infof("HAProxy version: %s", clusterMetadata.HAProxyVersion)
-	}
-	if r.indexer != nil {
-		if _, ok := (*r.indexer).(*indexers.Elastic); ok {
-			comparator = comparison.NewComparator(*indexers.ESClient, r.baseIndex)
-		}
 	}
 	if err := deployAssets(); err != nil {
 		return err
@@ -179,42 +159,20 @@ func (r *Runner) Start() error {
 		if benchmarkResult, err = runBenchmark(cfg, clusterMetadata, p, r.podMetrics); err != nil {
 			return err
 		}
-		if r.indexer != nil {
-			if !cfg.Warmup {
-				for _, res := range benchmarkResult {
-					benchmarkResultDocuments = append(benchmarkResultDocuments, res)
+		if r.indexer != nil && !cfg.Warmup {
+			for _, res := range benchmarkResult {
+				benchmarkResultDocuments = append(benchmarkResultDocuments, res)
+			}
+			// When not using local indexer, empty the documents array when all documents after indexing them
+			if _, ok := (*r.indexer).(*indexers.Local); !ok {
+				if indexDocuments(*r.indexer, benchmarkResultDocuments, indexers.IndexingOpts{}) != nil {
+					log.Errorf("Indexing error: %v", err.Error())
 				}
-				// When not using local indexer, empty the documents array when all documents after indexing them
-				if _, ok := (*r.indexer).(*indexers.Local); !ok {
-					if indexDocuments(*r.indexer, benchmarkResultDocuments, indexers.IndexingOpts{}) != nil {
-						log.Errorf("Indexing error: %v", err.Error())
-					}
-					benchmarkResultDocuments = []interface{}{}
-				}
-				if r.baseUUID != "" {
-					log.Infof("Comparing total_avg_rps with baseline: %v in index %s", r.baseUUID, r.baseIndex)
-					var totalAvgRps float64
-					query := fmt.Sprintf("uuid.keyword: %s AND config.termination.keyword: %s AND config.concurrency: %d AND config.connections: %d AND config.serverReplicas: %d AND config.path.keyword: \\%s",
-						r.baseUUID, cfg.Termination, cfg.Concurrency, cfg.Connections, cfg.ServerReplicas, cfg.Path)
-					log.Debugf("Query: %s", query)
-					for _, b := range benchmarkResult {
-						totalAvgRps += b.TotalAvgRps
-					}
-					totalAvgRps = totalAvgRps / float64(len(benchmarkResult))
-					msg, err := comparator.Compare("total_avg_rps", query, comparison.Avg, totalAvgRps, r.tolerancy)
-					if err != nil {
-						log.Error(err.Error())
-						passed = false
-					} else {
-						log.Info(msg)
-					}
-				}
-			} else {
-				log.Info("Warmup is enabled, skipping indexing")
+				benchmarkResultDocuments = []interface{}{}
 			}
 		}
 	}
-	if r.indexer != nil {
+	if _, ok := (*r.indexer).(*indexers.Local); r.indexer != nil && ok {
 		if err := indexDocuments(*r.indexer, benchmarkResultDocuments, indexers.IndexingOpts{MetricName: r.uuid}); err != nil {
 			log.Errorf("Indexing error: %v", err.Error())
 		}

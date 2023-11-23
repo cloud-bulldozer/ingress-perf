@@ -37,9 +37,6 @@ const (
 
 type Runner struct {
 	uuid       string
-	baseUUID   string
-	baseIndex  string
-	tolerancy  int
 	indexer    *indexers.Indexer
 	podMetrics bool
 	cleanup    bool
