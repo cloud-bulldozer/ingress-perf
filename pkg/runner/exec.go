@@ -38,7 +38,7 @@ import (
 
 var lock = &sync.Mutex{}
 
-func runBenchmark(cfg config.Config, clusterMetadata tools.ClusterMetadata, p *prometheus.Prometheus) ([]tools.Result, error) {
+func runBenchmark(cfg config.Config, clusterMetadata tools.ClusterMetadata, p *prometheus.Prometheus, podMetrics bool) ([]tools.Result, error) {
 	var aggAvgRps, aggAvgLatency, aggP95Latency float64
 	var timeouts, httpErrors int64
 	var benchmarkResult []tools.Result
@@ -101,6 +101,9 @@ func runBenchmark(cfg config.Config, clusterMetadata tools.ClusterMetadata, p *p
 			continue
 		}
 		normalizeResults(&result)
+		if !podMetrics {
+			result.Pods = nil
+		}
 		aggAvgRps += result.TotalAvgRps
 		aggAvgLatency += result.AvgLatency
 		aggP95Latency += result.P95Latency

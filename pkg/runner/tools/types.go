@@ -55,7 +55,7 @@ type Result struct {
 	UUID         string             `json:"uuid"`
 	Sample       int                `json:"sample"`
 	Config       config.Config      `json:"config"`
-	Pods         []PodResult        `json:"pods"`
+	Pods         []PodResult        `json:"pods,omitempty"`
 	Timestamp    time.Time          `json:"timestamp"`
 	TotalAvgRps  float64            `json:"total_avg_rps"`
 	StdevRps     float64            `json:"rps_stdev"`

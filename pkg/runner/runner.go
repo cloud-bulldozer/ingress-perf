@@ -21,7 +21,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/cloud-bulldozer/go-commons/comparison"
 	"github.com/cloud-bulldozer/go-commons/indexers"
 	"github.com/cloud-bulldozer/go-commons/prometheus"
 
@@ -50,13 +49,50 @@ var dynamicClient *dynamic.DynamicClient
 var orClientSet *openshiftrouteclientset.Clientset
 var currentTuning string
 
-func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.Indexer, cleanupAssets bool) error {
-	var benchmarkResultDocuments []interface{}
+func New(uuid string, cleanup bool, opts ...OptsFunctions) *Runner {
+	r := &Runner{
+		uuid:    uuid,
+		cleanup: cleanup,
+	}
+	for _, opts := range opts {
+		opts(r)
+	}
+	return r
+}
+
+func WithIndexer(esServer, esIndex, resultsDir string, podMetrics bool) OptsFunctions {
+	return func(r *Runner) {
+		if esServer != "" || resultsDir != "" {
+			var indexerCfg indexers.IndexerConfig
+			if esServer != "" {
+				indexerCfg = indexers.IndexerConfig{
+					Type:    indexers.ElasticIndexer,
+					Servers: []string{esServer},
+					Index:   esIndex,
+				}
+			} else if resultsDir != "" {
+				indexerCfg = indexers.IndexerConfig{
+					Type:             indexers.LocalIndexer,
+					MetricsDirectory: resultsDir,
+				}
+			}
+			log.Infof("Creating %s indexer", indexerCfg.Type)
+			indexer, err := indexers.NewIndexer(indexerCfg)
+			if err != nil {
+				log.Fatal(err)
+			}
+			r.indexer = indexer
+			r.podMetrics = podMetrics
+		}
+	}
+}
+
+func (r *Runner) Start() error {
 	var err error
 	var kubeconfig string
 	var benchmarkResult []tools.Result
-	var comparator comparison.Comparator
 	var clusterMetadata tools.ClusterMetadata
+	var benchmarkResultDocuments []interface{}
 	passed := true
 	if os.Getenv("KUBECONFIG") != "" {
 		kubeconfig = os.Getenv("KUBECONFIG")
@@ -80,7 +116,6 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 	if err != nil {
 		return err
 	}
-	clusterMetadata.HAProxyVersion, err = getHAProxyVersion()
 	promURL, promToken, err := ocpMetadata.GetPrometheus()
 	if err != nil {
 		log.Error("Error fetching prometheus information")
@@ -91,21 +126,17 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 		log.Error("Error creating prometheus client")
 		return err
 	}
+	clusterMetadata.HAProxyVersion, err = getHAProxyVersion()
 	if err != nil {
 		log.Errorf("Couldn't fetch haproxy version: %v", err)
 	} else {
 		log.Infof("HAProxy version: %s", clusterMetadata.HAProxyVersion)
 	}
-	if indexer != nil {
-		if _, ok := (*indexer).(*indexers.Elastic); ok {
-			comparator = comparison.NewComparator(*indexers.ESClient, baseIndex)
-		}
-	}
 	if err := deployAssets(); err != nil {
 		return err
 	}
 	for i, cfg := range config.Cfg {
-		cfg.UUID = uuid
+		cfg.UUID = r.uuid
 		log.Infof("Running test %d/%d", i+1, len(config.Cfg))
 		log.Infof("Tool:%s termination:%v servers:%d concurrency:%d procs:%d connections:%d duration:%v",
 			cfg.Tool,
@@ -125,50 +156,28 @@ func Start(uuid, baseUUID, baseIndex string, tolerancy int, indexer *indexers.In
 				return err
 			}
 		}
-		if benchmarkResult, err = runBenchmark(cfg, clusterMetadata, p); err != nil {
+		if benchmarkResult, err = runBenchmark(cfg, clusterMetadata, p, r.podMetrics); err != nil {
 			return err
 		}
-		if indexer != nil {
-			if !cfg.Warmup {
-				for _, res := range benchmarkResult {
-					benchmarkResultDocuments = append(benchmarkResultDocuments, res)
+		if r.indexer != nil && !cfg.Warmup {
+			for _, res := range benchmarkResult {
+				benchmarkResultDocuments = append(benchmarkResultDocuments, res)
+			}
+			// When not using local indexer, empty the documents array when all documents after indexing them
+			if _, ok := (*r.indexer).(*indexers.Local); !ok {
+				if indexDocuments(*r.indexer, benchmarkResultDocuments, indexers.IndexingOpts{}) != nil {
+					log.Errorf("Indexing error: %v", err.Error())
 				}
-				// When not using the local indexer, clear the documents array revert benchmark
-				if _, ok := (*indexer).(*indexers.Local); !ok {
-					if indexDocuments(*indexer, benchmarkResultDocuments, indexers.IndexingOpts{}) != nil {
-						log.Errorf("Indexing error: %v", err.Error())
-					}
-					benchmarkResultDocuments = []interface{}{}
-				}
-				if baseUUID != "" {
-					log.Infof("Comparing total_avg_rps with baseline: %v in index %s", baseUUID, baseIndex)
-					var totalAvgRps float64
-					query := fmt.Sprintf("uuid.keyword: %s AND config.termination.keyword: %s AND config.concurrency: %d AND config.connections: %d AND config.serverReplicas: %d AND config.path.keyword: \\%s",
-						baseUUID, cfg.Termination, cfg.Concurrency, cfg.Connections, cfg.ServerReplicas, cfg.Path)
-					log.Debugf("Query: %s", query)
-					for _, b := range benchmarkResult {
-						totalAvgRps += b.TotalAvgRps
-					}
-					totalAvgRps = totalAvgRps / float64(len(benchmarkResult))
-					msg, err := comparator.Compare("total_avg_rps", query, comparison.Avg, totalAvgRps, tolerancy)
-					if err != nil {
-						log.Error(err.Error())
-						passed = false
-					} else {
-						log.Info(msg)
-					}
-				}
-			} else {
-				log.Info("Warmup is enabled, skipping indexing")
+				benchmarkResultDocuments = []interface{}{}
 			}
 		}
 	}
-	if indexer != nil {
-		if err := indexDocuments(*indexer, benchmarkResultDocuments, indexers.IndexingOpts{MetricName: uuid}); err != nil {
+	if _, ok := (*r.indexer).(*indexers.Local); r.indexer != nil && ok {
+		if err := indexDocuments(*r.indexer, benchmarkResultDocuments, indexers.IndexingOpts{MetricName: r.uuid}); err != nil {
 			log.Errorf("Indexing error: %v", err.Error())
 		}
 	}
-	if cleanupAssets {
+	if r.cleanup {
 		if cleanup(10*time.Minute) != nil {
 			return err
 		}
