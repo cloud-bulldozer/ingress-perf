@@ -29,11 +29,11 @@ import (
 	"github.com/cloud-bulldozer/ingress-perf/pkg/runner/tools"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -48,6 +48,7 @@ var clientSet *kubernetes.Clientset
 var dynamicClient *dynamic.DynamicClient
 var orClientSet *openshiftrouteclientset.Clientset
 var currentTuning string
+var alreadyExistsNs bool
 
 func New(uuid string, cleanup bool, opts ...OptsFunctions) *Runner {
 	r := &Runner{
@@ -84,6 +85,15 @@ func WithIndexer(esServer, esIndex, resultsDir string, podMetrics bool) OptsFunc
 			r.indexer = indexer
 			r.podMetrics = podMetrics
 		}
+	}
+}
+
+func WithNamespace(namespace string) OptsFunctions {
+	return func(r *Runner) {
+		if errs := validation.IsDNS1123Subdomain(namespace); errs != nil {
+			log.Fatalf("Invalid namespace: %v", errs)
+		}
+		benchmarkNs = namespace
 	}
 }
 
@@ -199,42 +209,57 @@ func indexDocuments(indexer indexers.Indexer, documents []interface{}, indexingO
 
 func cleanup(timeout time.Duration) error {
 	log.Info("Cleaning up resources")
-	if err := clientSet.CoreV1().Namespaces().Delete(context.TODO(), benchmarkNs, metav1.DeleteOptions{}); err != nil {
-		return err
-	}
-	err := wait.PollUntilContextTimeout(context.TODO(), time.Second, timeout, true, func(ctx context.Context) (bool, error) {
-		_, err := clientSet.CoreV1().Namespaces().Get(context.TODO(), benchmarkNs, metav1.GetOptions{})
-		if err != nil {
-			if errors.IsNotFound(err) {
-				return true, nil
-			}
-			return false, err
+	if alreadyExistsNs {
+		if err := clientSet.AppsV1().Deployments(benchmarkNs).Delete(context.TODO(), client.Name, metav1.DeleteOptions{}); err != nil {
+			return err
 		}
-		return false, nil
-	})
-	if err != nil {
-		return err
+		if err := clientSet.AppsV1().Deployments(benchmarkNs).Delete(context.TODO(), server.Name, metav1.DeleteOptions{}); err != nil {
+			return err
+		}
+		if err := clientSet.CoreV1().Services(benchmarkNs).Delete(context.TODO(), service.Name, metav1.DeleteOptions{}); err != nil {
+			return err
+		}
+		for _, route := range routes {
+			if err := orClientSet.RouteV1().Routes(benchmarkNs).Delete(context.TODO(), route.Name, metav1.DeleteOptions{}); err != nil {
+				return err
+			}
+		}
+	} else {
+		if err := clientSet.CoreV1().Namespaces().Delete(context.TODO(), benchmarkNs, metav1.DeleteOptions{}); err != nil {
+			return err
+		}
+		err := wait.PollUntilContextTimeout(context.TODO(), time.Second, timeout, true, func(ctx context.Context) (bool, error) {
+			_, err := clientSet.CoreV1().Namespaces().Get(context.TODO(), benchmarkNs, metav1.GetOptions{})
+			if err != nil {
+				if errors.IsNotFound(err) {
+					return true, nil
+				}
+				return false, err
+			}
+			return false, nil
+		})
+		if err != nil {
+			return err
+		}
 	}
-	return clientSet.RbacV1().ClusterRoleBindings().Delete(context.Background(), clientCRB.Name, metav1.DeleteOptions{})
+	return clientSet.RbacV1().ClusterRoleBindings().Delete(context.Background(), getClientCRB(benchmarkNs).Name, metav1.DeleteOptions{})
 }
 
 func deployAssets() error {
 	log.Infof("Deploying benchmark assets")
-	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: benchmarkNs, Labels: map[string]string{
-		"pod-security.kubernetes.io/warn":                "privileged",
-		"pod-security.kubernetes.io/audit":               "privileged",
-		"pod-security.kubernetes.io/enforce":             "privileged",
-		"security.openshift.io/scc.podSecurityLabelSync": "false",
-	}}}
-	_, err := clientSet.CoreV1().Namespaces().Create(context.TODO(), ns, metav1.CreateOptions{})
-	if err != nil && !errors.IsAlreadyExists(err) {
-		return err
+	_, err := clientSet.CoreV1().Namespaces().Create(context.TODO(), getNamespace(benchmarkNs), metav1.CreateOptions{})
+	if err != nil {
+		if errors.IsAlreadyExists(err) {
+			alreadyExistsNs = true
+		} else {
+			return err
+		}
 	}
 	_, err = clientSet.AppsV1().Deployments(benchmarkNs).Create(context.TODO(), &server, metav1.CreateOptions{})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
 	}
-	_, err = clientSet.RbacV1().ClusterRoleBindings().Create(context.TODO(), &clientCRB, metav1.CreateOptions{})
+	_, err = clientSet.RbacV1().ClusterRoleBindings().Create(context.TODO(), getClientCRB(benchmarkNs), metav1.CreateOptions{})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
 	}

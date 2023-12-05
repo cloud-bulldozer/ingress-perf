@@ -28,12 +28,13 @@ import (
 )
 
 const (
-	benchmarkNs = "ingress-perf"
 	serverImage = "quay.io/cloud-bulldozer/nginx:latest"
 	serverName  = "nginx"
 	clientImage = "quay.io/cloud-bulldozer/ingress-perf:latest"
 	clientName  = "ingress-perf-client"
 )
+
+var benchmarkNs string
 
 type Runner struct {
 	uuid       string
@@ -65,10 +66,18 @@ var workerAffinity = &corev1.Affinity{
 	},
 }
 
+func getNamespace(namespace string) *corev1.Namespace {
+	return &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace, Labels: map[string]string{
+		"pod-security.kubernetes.io/warn":                "privileged",
+		"pod-security.kubernetes.io/audit":               "privileged",
+		"pod-security.kubernetes.io/enforce":             "privileged",
+		"security.openshift.io/scc.podSecurityLabelSync": "false",
+	}}}
+}
+
 var server = appsv1.Deployment{
 	ObjectMeta: metav1.ObjectMeta{
-		Name:      serverName,
-		Namespace: benchmarkNs,
+		Name: serverName,
 	},
 	Spec: appsv1.DeploymentSpec{
 		Strategy: appsv1.DeploymentStrategy{
@@ -113,8 +122,7 @@ var server = appsv1.Deployment{
 
 var service = corev1.Service{
 	ObjectMeta: metav1.ObjectMeta{
-		Name:      serverName,
-		Namespace: benchmarkNs,
+		Name: serverName,
 	},
 	Spec: corev1.ServiceSpec{
 		Selector: map[string]string{"app": serverName},
@@ -127,8 +135,7 @@ var service = corev1.Service{
 
 var client = appsv1.Deployment{
 	ObjectMeta: metav1.ObjectMeta{
-		Name:      clientName,
-		Namespace: benchmarkNs,
+		Name: clientName,
 	},
 	Spec: appsv1.DeploymentSpec{
 		Strategy: appsv1.DeploymentStrategy{
@@ -172,30 +179,30 @@ var client = appsv1.Deployment{
 	},
 }
 
-var clientCRB = rbac.ClusterRoleBinding{
-	ObjectMeta: metav1.ObjectMeta{
-		Name:      clientName,
-		Namespace: benchmarkNs,
-	},
-	Subjects: []rbac.Subject{
-		{
-			Kind:      "ServiceAccount",
-			Name:      "default",
-			Namespace: benchmarkNs,
+func getClientCRB(namespace string) *rbac.ClusterRoleBinding {
+	return &rbac.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clientName,
 		},
-	},
-	RoleRef: rbac.RoleRef{
-		APIGroup: "rbac.authorization.k8s.io",
-		Name:     "system:openshift:scc:hostnetwork-v2",
-		Kind:     "ClusterRole",
-	},
+		Subjects: []rbac.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      "default",
+				Namespace: namespace,
+			},
+		},
+		RoleRef: rbac.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Name:     "system:openshift:scc:hostnetwork-v2",
+			Kind:     "ClusterRole",
+		},
+	}
 }
 
 var routes = []routev1.Route{
 	{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: benchmarkNs,
-			Name:      fmt.Sprintf("%s-edge", serverName),
+			Name: fmt.Sprintf("%s-edge", serverName),
 		},
 		Spec: routev1.RouteSpec{
 			Port: &routev1.RoutePort{TargetPort: intstr.FromString("http")},
@@ -209,8 +216,7 @@ var routes = []routev1.Route{
 	},
 	{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: benchmarkNs,
-			Name:      fmt.Sprintf("%s-reencrypt", serverName),
+			Name: fmt.Sprintf("%s-reencrypt", serverName),
 		},
 		Spec: routev1.RouteSpec{
 			Port: &routev1.RoutePort{TargetPort: intstr.FromString("https")},
@@ -225,8 +231,7 @@ var routes = []routev1.Route{
 	},
 	{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: benchmarkNs,
-			Name:      fmt.Sprintf("%s-passthrough", serverName),
+			Name: fmt.Sprintf("%s-passthrough", serverName),
 			Annotations: map[string]string{
 				// Passthrough terminations default balance strategy is source, this strategy is not suitable for
 				// performance testing when concurrency is higher than 1, as all the requests will use the same source IP
@@ -245,8 +250,7 @@ var routes = []routev1.Route{
 	},
 	{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: benchmarkNs,
-			Name:      fmt.Sprintf("%s-http", serverName),
+			Name: fmt.Sprintf("%s-http", serverName),
 		},
 		Spec: routev1.RouteSpec{
 			Port: &routev1.RoutePort{TargetPort: intstr.FromString("http")},

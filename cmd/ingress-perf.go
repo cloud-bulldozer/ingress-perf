@@ -43,7 +43,7 @@ var versionCmd = &cobra.Command{
 }
 
 func run() *cobra.Command {
-	var cfg, uuid, esServer, esIndex, logLevel, outputDir string
+	var cfg, uuid, esServer, esIndex, logLevel, outputDir, namespace string
 	var cleanup, podMetrics bool
 	cmd := &cobra.Command{
 		Use:           "run",
@@ -66,6 +66,7 @@ func run() *cobra.Command {
 			r := runner.New(
 				uuid, cleanup,
 				runner.WithIndexer(esServer, esIndex, outputDir, podMetrics),
+				runner.WithNamespace(namespace),
 			)
 			return r.Start()
 		},
@@ -78,6 +79,7 @@ func run() *cobra.Command {
 	cmd.Flags().BoolVar(&cleanup, "cleanup", true, "Cleanup benchmark assets")
 	cmd.Flags().BoolVar(&podMetrics, "pod-metrics", false, "Index per pod metrics")
 	cmd.Flags().StringVar(&logLevel, "loglevel", "info", "Log level. Allowed levels are error, info and debug")
+	cmd.Flags().StringVarP(&namespace, "namespace", "n", "ingress-perf", "Ingres-perf will use this namespace to deploy the stuff")
 	cmd.MarkFlagRequired("cfg")
 	return cmd
 }
