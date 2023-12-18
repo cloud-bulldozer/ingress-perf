@@ -1,26 +1,15 @@
-# vim: expandtab shiftwidth=2 softtabstop=2
+# vi: expandtab shiftwidth=2 softtabstop=2
 
-# First sample is set as warmup and also will tune the default ingress-controller to place the routers on infra nodes
-- termination: http
-  connections: 20
-  samples: 1
-  duration: 1m
-  path: /1024.html
-  concurrency: 1
-  tool: wrk
-  serverReplicas: 90
-  requestTimeout: 2s
-  tuningPatch: '{"spec":{"nodePlacement": {"nodeSelector": {"matchLabels": {"node-role.kubernetes.io/infra": ""}}}, "replicas": 2}}'
-  warmup: true
-
+# First scenario is configured as warmup and it will also tune the default ingress-controller to assign the router pods to the infra nodes
 - termination: http
   connections: 200
   samples: 2
   duration: 2m
   path: /1024.html
-  concurrency: 1
+  concurrency: 18
   tool: wrk
-  serverReplicas: 90
+  serverReplicas: 45
+  requestTimeout: 10s
   delay: 10s
   procs: 2
 

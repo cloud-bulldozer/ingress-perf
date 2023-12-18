@@ -44,11 +44,11 @@ func runBenchmark(cfg config.Config, clusterMetadata tools.ClusterMetadata, p *p
 	var benchmarkResult []tools.Result
 	var clientPods []corev1.Pod
 	var ep string
-	r, err := orClientSet.RouteV1().Routes(benchmarkNs).Get(context.TODO(), fmt.Sprintf("%s-%s", serverName, cfg.Termination), metav1.GetOptions{})
+	r, err := orClientSet.RouteV1().Routes(routesNamespace).Get(context.TODO(), fmt.Sprintf("%s-%s", serverName, cfg.Termination), metav1.GetOptions{})
 	if err != nil {
 		return benchmarkResult, err
 	}
-	allClientPods, err := clientSet.CoreV1().Pods(benchmarkNs).List(context.TODO(), metav1.ListOptions{
+	allClientPods, err := clientSet.CoreV1().Pods(benchmarkNs.Name).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("app=%s", clientName),
 	})
 	if err != nil {
@@ -151,7 +151,7 @@ func exec(ctx context.Context, tool tools.Tool, pod corev1.Pod, result *tools.Re
 	req := clientSet.CoreV1().RESTClient().Post().
 		Resource("pods").
 		Name(pod.Name).
-		Namespace(benchmarkNs).
+		Namespace(benchmarkNs.Name).
 		SubResource("exec")
 	req.VersionedParams(&corev1.PodExecOptions{
 		Container: clientName,
