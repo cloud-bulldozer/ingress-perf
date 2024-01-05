@@ -26,7 +26,7 @@ import (
 	rbac "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 )
 
 const (
@@ -110,16 +110,16 @@ var server = appsv1.Deployment{
 					},
 				}},
 				Affinity:                      workerAffinity,
-				TerminationGracePeriodSeconds: pointer.Int64(0), // It helps to kill the pod inmediatly on GC
+				TerminationGracePeriodSeconds: ptr.To[int64](0), // It helps to kill the pod immediately on GC
 				Containers: []corev1.Container{
 					{
 						Name:            serverName,
 						Image:           serverImage,
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						SecurityContext: &corev1.SecurityContext{
-							AllowPrivilegeEscalation: pointer.Bool(false),
+							AllowPrivilegeEscalation: ptr.To[bool](false),
 							Capabilities:             &corev1.Capabilities{Drop: []corev1.Capability{"ALL"}},
-							RunAsNonRoot:             pointer.Bool(true),
+							RunAsNonRoot:             ptr.To[bool](true),
 							SeccompProfile:           &corev1.SeccompProfile{Type: corev1.SeccompProfileTypeRuntimeDefault},
 						},
 						Ports: []corev1.ContainerPort{{Name: "http", Protocol: corev1.ProtocolTCP, ContainerPort: 8080}},
@@ -171,7 +171,7 @@ var client = appsv1.Deployment{
 					},
 				}},
 				Affinity:                      workerAffinity,
-				TerminationGracePeriodSeconds: pointer.Int64(0),
+				TerminationGracePeriodSeconds: ptr.To[int64](0),
 				HostNetwork:                   true, // Enable hostNetwork in client pods
 				Containers: []corev1.Container{
 					{
@@ -180,9 +180,9 @@ var client = appsv1.Deployment{
 						Image:           clientImage,
 						ImagePullPolicy: corev1.PullAlways,
 						SecurityContext: &corev1.SecurityContext{
-							AllowPrivilegeEscalation: pointer.Bool(false),
+							AllowPrivilegeEscalation: ptr.To[bool](false),
 							Capabilities:             &corev1.Capabilities{Drop: []corev1.Capability{"ALL"}},
-							RunAsNonRoot:             pointer.Bool(true),
+							RunAsNonRoot:             ptr.To[bool](true),
 							SeccompProfile:           &corev1.SeccompProfile{Type: corev1.SeccompProfileTypeRuntimeDefault},
 						},
 					},
@@ -322,7 +322,7 @@ var virtualService = v1networking.VirtualService{
 						Destination: &v1beta1.Destination{
 							Host: service.Name,
 							Port: &v1beta1.PortSelector{
-								Number: *pointer.Uint32(8080),
+								Number: 8080,
 							},
 						},
 					},
