@@ -110,7 +110,7 @@ func runBenchmark(cfg config.Config, clusterMetadata tools.ClusterMetadata, p *p
 		timeouts += result.Timeouts
 		httpErrors += result.HTTPErrors
 		elapsed := fmt.Sprintf("%ds", int(time.Since(sampleTs).Seconds()))
-		for field, query := range cfg.PrometheusMetrics {
+		for field, query := range config.PrometheusQueries {
 			promQuery := strings.ReplaceAll(query, "ELAPSED", elapsed)
 			log.Debugf("Running query: %s", promQuery)
 			value, err := p.Query(promQuery, time.Time{}.UTC())

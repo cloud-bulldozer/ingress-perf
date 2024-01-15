@@ -46,8 +46,6 @@ type Config struct {
 	Warmup bool `yaml:"warmup" json:"-"`
 	// RequestTimeout defines the tool request timeout
 	RequestTimeout time.Duration `yaml:"requestTimeout" json:"requestTimeout"`
-	// Prometheus metrics
-	PrometheusMetrics map[string]string `json:"-"`
 	// RequestRate defines the amount of requests to run in parallel
 	RequestRate int `yaml:"requestRate" json:"requestRate"`
 	// Keepalive use keepalived connections
@@ -56,7 +54,7 @@ type Config struct {
 	HTTP2 bool `yaml:"http2" json:"http2"`
 }
 
-var prometheusQueries = map[string]string{
+var PrometheusQueries = map[string]string{
 	"avg_cpu_usage_router_pods":           "avg(avg_over_time(sum(irate(container_cpu_usage_seconds_total{name!='', namespace='openshift-ingress', pod=~'router-default.+'}[2m])) by (pod)[ELAPSED:]))",
 	"avg_memory_usage_router_pods_bytes":  "avg(avg_over_time(sum(container_memory_working_set_bytes{name!='', namespace='openshift-ingress', pod=~'router-default.+'}) by (pod)[ELAPSED:]))",
 	"avg_cpu_usage_router_nodes":          "avg(avg_over_time(sum(irate(node_cpu_seconds_total{mode!~'idle|steal'}[2m]) and on (instance) label_replace(kube_pod_info{namespace='openshift-ingress'},'instance', '$1', 'node', '(.+)')) by (instance)[ELAPSED:]))",
