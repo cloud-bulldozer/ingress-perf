@@ -33,22 +33,24 @@ type Tool interface {
 }
 
 type PodResult struct {
-	Name         string  `json:"pod"`
-	Node         string  `json:"node"`
-	InstanceType string  `json:"instanceType"`
-	AvgRps       float64 `json:"rps"`
-	StdevRps     float64 `json:"rps_stdev"`
-	StdevLatency float64 `json:"stdev_lat"`
-	AvgLatency   float64 `json:"avg_lat_us"`
-	MaxLatency   float64 `json:"max_lat_us"`
-	P90Latency   float64 `json:"p90_lat_us"`
-	P95Latency   float64 `json:"p95_lat_us"`
-	P99Latency   float64 `json:"p99_lat_us"`
-	HTTPErrors   int64   `json:"http_errors"`
-	ReadErrors   int64   `json:"read_errors"`
-	WriteErrors  int64   `json:"write_errors"`
-	Requests     int64   `json:"requests"`
-	Timeouts     int64   `json:"timeouts"`
+	Name             string        `json:"pod"`
+	Node             string        `json:"node"`
+	InstanceType     string        `json:"instanceType"`
+	AvgRps           float64       `json:"rps"`
+	StdevRps         float64       `json:"rps_stdev"`
+	StdevLatency     float64       `json:"stdev_lat"`
+	AvgLatency       float64       `json:"avg_lat_us"`
+	MaxLatency       float64       `json:"max_lat_us"`
+	P90Latency       float64       `json:"p90_lat_us"`
+	P95Latency       float64       `json:"p95_lat_us"`
+	P99Latency       float64       `json:"p99_lat_us"`
+	HTTPErrors       int64         `json:"http_errors"`
+	ReadErrors       int64         `json:"read_errors"`
+	WriteErrors      int64         `json:"write_errors"`
+	Requests         int64         `json:"requests"`
+	Timeouts         int64         `json:"timeouts"`
+	AvgThgoughputBps int64         `json:"avg_throughput_bps"`
+	StatusCodes      map[int]int64 `json:"status_codes"`
 }
 
 type Result struct {
@@ -72,5 +74,6 @@ type Result struct {
 	Timeouts     int64              `json:"timeouts"`
 	Version      string             `json:"version"`
 	InfraMetrics map[string]float64 `json:"infra_metrics"`
+	StatusCodes  map[int]int64      `json:"status_codes"`
 	ClusterMetadata
 }

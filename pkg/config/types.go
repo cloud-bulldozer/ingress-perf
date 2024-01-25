@@ -48,6 +48,12 @@ type Config struct {
 	RequestTimeout time.Duration `yaml:"requestTimeout" json:"requestTimeout"`
 	// Prometheus metrics
 	PrometheusMetrics map[string]string `json:"-"`
+	// RequestRate defines the amount of requests to run in parallel
+	RequestRate int `yaml:"requestRate" json:"requestRate"`
+	// Keepalive use keepalived connections
+	Keepalive bool `yaml:"keepalive" json:"keepalive"`
+	// Use HTTP2 protocol, if possible
+	HTTP2 bool `yaml:"http2" json:"http2"`
 }
 
 var prometheusQueries = map[string]string{

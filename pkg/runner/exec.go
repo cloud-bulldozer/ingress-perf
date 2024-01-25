@@ -199,6 +199,7 @@ func exec(ctx context.Context, tool tools.Tool, pod corev1.Pod, result *tools.Re
 }
 
 func normalizeResults(result *tools.Result) {
+	result.StatusCodes = make(map[int]int64)
 	for _, pod := range result.Pods {
 		result.TotalAvgRps += pod.AvgRps
 		result.StdevRps += pod.StdevRps
