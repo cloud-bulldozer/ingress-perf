@@ -20,7 +20,7 @@
   path: /1024.html
   concurrency: 1
   tool: wrk
-  serverReplicas: 90
+  serverReplicas: 45
   delay: 10s
   procs: 2
 
@@ -31,7 +31,7 @@
   path: /1024.html
   concurrency: 1
   tool: wrk
-  serverReplicas: 90
+  serverReplicas: 45
   delay: 10s
   procs: 2
 
@@ -42,6 +42,6 @@
   path: /1024.html
   concurrency: 1
   tool: wrk
-  serverReplicas: 90
+  serverReplicas: 45
   delay: 10s
   procs: 2
