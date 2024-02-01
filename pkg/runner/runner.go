@@ -29,22 +29,25 @@ import (
 	"github.com/cloud-bulldozer/ingress-perf/pkg/runner/tools"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
+	v1 "github.com/openshift/api/route/v1"
 	openshiftrouteclientset "github.com/openshift/client-go/route/clientset/versioned"
+	istioclient "istio.io/client-go/pkg/clientset/versioned"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
 var restConfig *rest.Config
 var clientSet *kubernetes.Clientset
+var istioClient *istioclient.Clientset
 var dynamicClient *dynamic.DynamicClient
 var orClientSet *openshiftrouteclientset.Clientset
 var currentTuning string
@@ -87,6 +90,17 @@ func WithIndexer(esServer, esIndex, resultsDir string, podMetrics bool) OptsFunc
 	}
 }
 
+func WithServiceMesh(enable bool, igNamespace string) OptsFunctions {
+	return func(r *Runner) {
+		r.serviceMesh = enable
+		r.igNamespace = igNamespace
+		config.PrometheusQueries["avg_cpu_usage_ingress_gateway_pods"] =
+			fmt.Sprintf("avg(avg_over_time(sum(irate(container_cpu_usage_seconds_total{name!='', namespace='%s', pod=~'istio-ingressgateway.+'}[2m])) by (pod)[ELAPSED:]))", igNamespace)
+		config.PrometheusQueries["avg_memory_usage_ingress_gateway_pods_bytes"] =
+			fmt.Sprintf("avg(avg_over_time(sum(container_memory_working_set_bytes{name!='', namespace='%s', pod=~'istio-ingressgateway.+'}) by (pod)[ELAPSED:]))", igNamespace)
+	}
+}
+
 func (r *Runner) Start() error {
 	var err error
 	var kubeconfig string
@@ -106,6 +120,7 @@ func (r *Runner) Start() error {
 	restConfig.QPS = 200
 	restConfig.Burst = 200
 	clientSet = kubernetes.NewForConfigOrDie(restConfig)
+	istioClient = istioclient.NewForConfigOrDie(restConfig)
 	orClientSet = openshiftrouteclientset.NewForConfigOrDie(restConfig)
 	dynamicClient = dynamic.NewForConfigOrDie(restConfig)
 	ocpMetadata, err := ocpmetadata.NewMetadata(restConfig)
@@ -132,7 +147,7 @@ func (r *Runner) Start() error {
 	} else {
 		log.Infof("HAProxy version: %s", clusterMetadata.HAProxyVersion)
 	}
-	if err := deployAssets(); err != nil {
+	if err := r.deployAssets(); err != nil {
 		return err
 	}
 	for i, cfg := range config.Cfg {
@@ -199,11 +214,11 @@ func indexDocuments(indexer indexers.Indexer, documents []interface{}, indexingO
 
 func cleanup(timeout time.Duration) error {
 	log.Info("Cleaning up resources")
-	if err := clientSet.CoreV1().Namespaces().Delete(context.TODO(), benchmarkNs, metav1.DeleteOptions{}); err != nil {
+	if err := clientSet.CoreV1().Namespaces().Delete(context.TODO(), benchmarkNs.Name, metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 	err := wait.PollUntilContextTimeout(context.TODO(), time.Second, timeout, true, func(ctx context.Context) (bool, error) {
-		_, err := clientSet.CoreV1().Namespaces().Get(context.TODO(), benchmarkNs, metav1.GetOptions{})
+		_, err := clientSet.CoreV1().Namespaces().Get(context.TODO(), benchmarkNs.Name, metav1.GetOptions{})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				return true, nil
@@ -218,19 +233,17 @@ func cleanup(timeout time.Duration) error {
 	return clientSet.RbacV1().ClusterRoleBindings().Delete(context.Background(), clientCRB.Name, metav1.DeleteOptions{})
 }
 
-func deployAssets() error {
+func (r *Runner) deployAssets() error {
 	log.Infof("Deploying benchmark assets")
-	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: benchmarkNs, Labels: map[string]string{
-		"pod-security.kubernetes.io/warn":                "privileged",
-		"pod-security.kubernetes.io/audit":               "privileged",
-		"pod-security.kubernetes.io/enforce":             "privileged",
-		"security.openshift.io/scc.podSecurityLabelSync": "false",
-	}}}
-	_, err := clientSet.CoreV1().Namespaces().Create(context.TODO(), ns, metav1.CreateOptions{})
+	if r.serviceMesh {
+		log.Info("Service mesh mode enabled")
+		benchmarkNs.Labels["istio-injection"] = "enabled"
+	}
+	_, err := clientSet.CoreV1().Namespaces().Create(context.TODO(), &benchmarkNs, metav1.CreateOptions{})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
 	}
-	_, err = clientSet.AppsV1().Deployments(benchmarkNs).Create(context.TODO(), &server, metav1.CreateOptions{})
+	_, err = clientSet.AppsV1().Deployments(benchmarkNs.Name).Create(context.TODO(), &server, metav1.CreateOptions{})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
 	}
@@ -238,16 +251,37 @@ func deployAssets() error {
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
 	}
-	_, err = clientSet.AppsV1().Deployments(benchmarkNs).Create(context.TODO(), &client, metav1.CreateOptions{})
+	_, err = clientSet.AppsV1().Deployments(benchmarkNs.Name).Create(context.TODO(), &client, metav1.CreateOptions{})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
 	}
-	_, err = clientSet.CoreV1().Services(benchmarkNs).Create(context.TODO(), &service, metav1.CreateOptions{})
+	_, err = clientSet.CoreV1().Services(benchmarkNs.Name).Create(context.TODO(), &service, metav1.CreateOptions{})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
 	}
 	for _, route := range routes {
-		_, err = orClientSet.RouteV1().Routes(benchmarkNs).Create(context.TODO(), &route, metav1.CreateOptions{})
+		if r.serviceMesh {
+			route.Spec.To = v1.RouteTargetReference{
+				Name: "istio-ingressgateway",
+			}
+			route.Spec.Port.TargetPort = intstr.FromString("http2")
+			routesNamespace = r.igNamespace
+		}
+		_, err := orClientSet.RouteV1().Routes(routesNamespace).Create(context.TODO(), &route, metav1.CreateOptions{})
+		if err != nil && !errors.IsAlreadyExists(err) {
+			return err
+		}
+	}
+	if r.serviceMesh {
+		routes, _ := orClientSet.RouteV1().Routes(routesNamespace).List(context.TODO(), metav1.ListOptions{LabelSelector: "app=ingress-perf"})
+		for _, r := range routes.Items {
+			ingressGateway.Spec.Servers[0].Hosts = append(ingressGateway.Spec.Servers[0].Hosts, r.Spec.Host)
+		}
+		_, err = istioClient.NetworkingV1beta1().Gateways(benchmarkNs.Name).Create(context.TODO(), &ingressGateway, metav1.CreateOptions{})
+		if err != nil && !errors.IsAlreadyExists(err) {
+			return err
+		}
+		_, err = istioClient.NetworkingV1beta1().VirtualServices(benchmarkNs.Name).Create(context.TODO(), &virtualService, metav1.CreateOptions{})
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
@@ -257,7 +291,7 @@ func deployAssets() error {
 
 func reconcileNs(cfg config.Config) error {
 	f := func(deployment appsv1.Deployment, replicas int32) error {
-		d, err := clientSet.AppsV1().Deployments(benchmarkNs).Get(context.TODO(), deployment.Name, metav1.GetOptions{})
+		d, err := clientSet.AppsV1().Deployments(benchmarkNs.Name).Get(context.TODO(), deployment.Name, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
@@ -265,11 +299,11 @@ func reconcileNs(cfg config.Config) error {
 			return nil
 		}
 		deployment.Spec.Replicas = &replicas
-		_, err = clientSet.AppsV1().Deployments(benchmarkNs).Update(context.TODO(), &deployment, metav1.UpdateOptions{})
+		_, err = clientSet.AppsV1().Deployments(benchmarkNs.Name).Update(context.TODO(), &deployment, metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
-		return waitForDeployment(benchmarkNs, deployment.Name, time.Minute)
+		return waitForDeployment(benchmarkNs.Name, deployment.Name, time.Minute)
 	}
 	if err := f(server, cfg.ServerReplicas); err != nil {
 		return err

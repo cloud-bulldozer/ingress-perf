@@ -43,8 +43,8 @@ var versionCmd = &cobra.Command{
 }
 
 func run() *cobra.Command {
-	var cfg, uuid, esServer, esIndex, logLevel, outputDir string
-	var cleanup, podMetrics bool
+	var cfg, uuid, esServer, esIndex, logLevel, outputDir, igNamespace string
+	var cleanup, podMetrics, serviceMesh bool
 	cmd := &cobra.Command{
 		Use:           "run",
 		Short:         "Run benchmark",
@@ -66,6 +66,7 @@ func run() *cobra.Command {
 			r := runner.New(
 				uuid, cleanup,
 				runner.WithIndexer(esServer, esIndex, outputDir, podMetrics),
+				runner.WithServiceMesh(serviceMesh, igNamespace),
 			)
 			return r.Start()
 		},
@@ -78,6 +79,8 @@ func run() *cobra.Command {
 	cmd.Flags().BoolVar(&cleanup, "cleanup", true, "Cleanup benchmark assets")
 	cmd.Flags().BoolVar(&podMetrics, "pod-metrics", false, "Index per pod metrics")
 	cmd.Flags().StringVar(&logLevel, "loglevel", "info", "Log level. Allowed levels are error, info and debug")
+	cmd.Flags().StringVar(&igNamespace, "gw-ns", "istio-system", "Ingress gateway namespace")
+	cmd.Flags().BoolVar(&serviceMesh, "service-mesh", false, "Enable service mesh mode")
 	cmd.MarkFlagRequired("cfg")
 	return cmd
 }

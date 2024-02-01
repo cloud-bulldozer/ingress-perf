@@ -19,16 +19,17 @@ import (
 
 	"github.com/cloud-bulldozer/go-commons/indexers"
 	routev1 "github.com/openshift/api/route/v1"
+	"istio.io/api/networking/v1beta1"
+	v1networking "istio.io/client-go/pkg/apis/networking/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 )
 
 const (
-	benchmarkNs = "ingress-perf"
 	serverImage = "quay.io/cloud-bulldozer/nginx:latest"
 	serverName  = "nginx"
 	clientImage = "quay.io/cloud-bulldozer/ingress-perf:latest"
@@ -36,13 +37,29 @@ const (
 )
 
 type Runner struct {
-	uuid       string
-	indexer    *indexers.Indexer
-	podMetrics bool
-	cleanup    bool
+	uuid        string
+	indexer     *indexers.Indexer
+	podMetrics  bool
+	cleanup     bool
+	serviceMesh bool
+	igNamespace string
 }
 
 type OptsFunctions func(r *Runner)
+
+var routesNamespace = benchmarkNs.Name
+
+var benchmarkNs = corev1.Namespace{
+	ObjectMeta: metav1.ObjectMeta{
+		Name: "ingress-perf",
+		Labels: map[string]string{
+			"pod-security.kubernetes.io/warn":                "privileged",
+			"pod-security.kubernetes.io/audit":               "privileged",
+			"pod-security.kubernetes.io/enforce":             "privileged",
+			"security.openshift.io/scc.podSecurityLabelSync": "false",
+		},
+	},
+}
 
 var workerAffinity = &corev1.Affinity{
 	NodeAffinity: &corev1.NodeAffinity{
@@ -67,8 +84,7 @@ var workerAffinity = &corev1.Affinity{
 
 var server = appsv1.Deployment{
 	ObjectMeta: metav1.ObjectMeta{
-		Name:      serverName,
-		Namespace: benchmarkNs,
+		Name: serverName,
 	},
 	Spec: appsv1.DeploymentSpec{
 		Strategy: appsv1.DeploymentStrategy{
@@ -80,6 +96,9 @@ var server = appsv1.Deployment{
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: map[string]string{"app": serverName},
+				Annotations: map[string]string{
+					"sidecar.istio.io/inject": "true",
+				},
 			},
 			Spec: corev1.PodSpec{
 				TopologySpreadConstraints: []corev1.TopologySpreadConstraint{{
@@ -91,16 +110,16 @@ var server = appsv1.Deployment{
 					},
 				}},
 				Affinity:                      workerAffinity,
-				TerminationGracePeriodSeconds: pointer.Int64(0), // It helps to kill the pod inmediatly on GC
+				TerminationGracePeriodSeconds: ptr.To[int64](0), // It helps to kill the pod immediately on GC
 				Containers: []corev1.Container{
 					{
 						Name:            serverName,
 						Image:           serverImage,
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						SecurityContext: &corev1.SecurityContext{
-							AllowPrivilegeEscalation: pointer.Bool(false),
+							AllowPrivilegeEscalation: ptr.To[bool](false),
 							Capabilities:             &corev1.Capabilities{Drop: []corev1.Capability{"ALL"}},
-							RunAsNonRoot:             pointer.Bool(true),
+							RunAsNonRoot:             ptr.To[bool](true),
 							SeccompProfile:           &corev1.SeccompProfile{Type: corev1.SeccompProfileTypeRuntimeDefault},
 						},
 						Ports: []corev1.ContainerPort{{Name: "http", Protocol: corev1.ProtocolTCP, ContainerPort: 8080}},
@@ -113,8 +132,7 @@ var server = appsv1.Deployment{
 
 var service = corev1.Service{
 	ObjectMeta: metav1.ObjectMeta{
-		Name:      serverName,
-		Namespace: benchmarkNs,
+		Name: serverName,
 	},
 	Spec: corev1.ServiceSpec{
 		Selector: map[string]string{"app": serverName},
@@ -127,8 +145,7 @@ var service = corev1.Service{
 
 var client = appsv1.Deployment{
 	ObjectMeta: metav1.ObjectMeta{
-		Name:      clientName,
-		Namespace: benchmarkNs,
+		Name: clientName,
 	},
 	Spec: appsv1.DeploymentSpec{
 		Strategy: appsv1.DeploymentStrategy{
@@ -140,6 +157,9 @@ var client = appsv1.Deployment{
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: map[string]string{"app": clientName},
+				Annotations: map[string]string{
+					"sidecar.istio.io/inject": "true",
+				},
 			},
 			Spec: corev1.PodSpec{
 				TopologySpreadConstraints: []corev1.TopologySpreadConstraint{{
@@ -151,7 +171,7 @@ var client = appsv1.Deployment{
 					},
 				}},
 				Affinity:                      workerAffinity,
-				TerminationGracePeriodSeconds: pointer.Int64(0),
+				TerminationGracePeriodSeconds: ptr.To[int64](0),
 				HostNetwork:                   true, // Enable hostNetwork in client pods
 				Containers: []corev1.Container{
 					{
@@ -160,9 +180,9 @@ var client = appsv1.Deployment{
 						Image:           clientImage,
 						ImagePullPolicy: corev1.PullAlways,
 						SecurityContext: &corev1.SecurityContext{
-							AllowPrivilegeEscalation: pointer.Bool(false),
+							AllowPrivilegeEscalation: ptr.To[bool](false),
 							Capabilities:             &corev1.Capabilities{Drop: []corev1.Capability{"ALL"}},
-							RunAsNonRoot:             pointer.Bool(true),
+							RunAsNonRoot:             ptr.To[bool](true),
 							SeccompProfile:           &corev1.SeccompProfile{Type: corev1.SeccompProfileTypeRuntimeDefault},
 						},
 					},
@@ -174,14 +194,13 @@ var client = appsv1.Deployment{
 
 var clientCRB = rbac.ClusterRoleBinding{
 	ObjectMeta: metav1.ObjectMeta{
-		Name:      clientName,
-		Namespace: benchmarkNs,
+		Name: clientName,
 	},
 	Subjects: []rbac.Subject{
 		{
 			Kind:      "ServiceAccount",
 			Name:      "default",
-			Namespace: benchmarkNs,
+			Namespace: benchmarkNs.Name,
 		},
 	},
 	RoleRef: rbac.RoleRef{
@@ -194,8 +213,10 @@ var clientCRB = rbac.ClusterRoleBinding{
 var routes = []routev1.Route{
 	{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: benchmarkNs,
-			Name:      fmt.Sprintf("%s-edge", serverName),
+			Name: fmt.Sprintf("%s-edge", serverName),
+			Labels: map[string]string{
+				"app": "ingress-perf",
+			},
 		},
 		Spec: routev1.RouteSpec{
 			Port: &routev1.RoutePort{TargetPort: intstr.FromString("http")},
@@ -209,8 +230,10 @@ var routes = []routev1.Route{
 	},
 	{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: benchmarkNs,
-			Name:      fmt.Sprintf("%s-reencrypt", serverName),
+			Name: fmt.Sprintf("%s-reencrypt", serverName),
+			Labels: map[string]string{
+				"app": "ingress-perf",
+			},
 		},
 		Spec: routev1.RouteSpec{
 			Port: &routev1.RoutePort{TargetPort: intstr.FromString("https")},
@@ -225,12 +248,14 @@ var routes = []routev1.Route{
 	},
 	{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: benchmarkNs,
-			Name:      fmt.Sprintf("%s-passthrough", serverName),
+			Name: fmt.Sprintf("%s-passthrough", serverName),
 			Annotations: map[string]string{
 				// Passthrough terminations default balance strategy is source, this strategy is not suitable for
 				// performance testing when concurrency is higher than 1, as all the requests will use the same source IP
 				"haproxy.router.openshift.io/balance": "random",
+			},
+			Labels: map[string]string{
+				"app": "ingress-perf",
 			},
 		},
 		Spec: routev1.RouteSpec{
@@ -245,13 +270,63 @@ var routes = []routev1.Route{
 	},
 	{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: benchmarkNs,
-			Name:      fmt.Sprintf("%s-http", serverName),
+			Name: fmt.Sprintf("%s-http", serverName),
+			Labels: map[string]string{
+				"app": "ingress-perf",
+			},
 		},
 		Spec: routev1.RouteSpec{
 			Port: &routev1.RoutePort{TargetPort: intstr.FromString("http")},
 			To: routev1.RouteTargetReference{
 				Name: service.Name,
+			},
+		},
+	},
+}
+
+var ingressGateway = v1networking.Gateway{
+	ObjectMeta: metav1.ObjectMeta{
+		Name: "gateway",
+	},
+	Spec: v1beta1.Gateway{
+		Selector: map[string]string{
+			"istio": "ingressgateway",
+		},
+		Servers: []*v1beta1.Server{
+			{
+				Port: &v1beta1.Port{
+					Number:   80,
+					Protocol: "HTTP",
+					Name:     "http",
+				},
+			},
+		},
+	},
+}
+
+var virtualService = v1networking.VirtualService{
+	ObjectMeta: metav1.ObjectMeta{
+		Name: "http",
+	},
+	Spec: v1beta1.VirtualService{
+		Hosts: []string{
+			"*",
+		},
+		Gateways: []string{
+			ingressGateway.Name,
+		},
+		Http: []*v1beta1.HTTPRoute{
+			{
+				Route: []*v1beta1.HTTPRouteDestination{
+					{
+						Destination: &v1beta1.Destination{
+							Host: service.Name,
+							Port: &v1beta1.PortSelector{
+								Number: 8080,
+							},
+						},
+					},
+				},
 			},
 		},
 	},
