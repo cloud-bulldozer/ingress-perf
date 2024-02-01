@@ -70,10 +70,19 @@ time="2023-05-10 13:24:41" level=info msg="Running test 1/9: http" file="runner.
 
 Check out the `run` subcommand help for more info about the allowed flags.
 
+## Service Mesh
+
+Ingress-perf is compatible with the OpenShift implementation of the Istio ingress-gateway, provided by OpenShift Service Mesh. To enable it it's necessary to pass the flag `--service-mesh=true`, when specified, `ingress-perf` will create its routes in the namespace specified by `--gw-ns`, by deault `istio-system`, these routes point to the http2 port of the `istio-ingress-gateway` service. 4 gateways and 1 virtualservice are also created in the `ingress-perf` namespace.
+
+At the time of writing these lines only the `http` and `edge` terminations are supported.
+
 ## Compile
 
 Go 1.19 is required
 
 ```console
 $ make build
+GOARCH=amd64 CGO_ENABLED=0 go build -v -ldflags "-X github.com/cloud-bulldozer/go-commons/version.GitCommit=34d5810c80185f788c67c41ea9e904bc22a98908 -X github.com/cloud-bulldozer/go-commons/version.Version=ingress-gateway -X github.com/cloud-bulldozer/go-commons/version.BuildDate=2024-02-01-10:23:15" -o bin/ingress-perf cmd/ingress-perf.go
+$ ls bin/ingress-perf
+ingress-perf
 ```
