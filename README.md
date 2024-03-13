@@ -12,7 +12,7 @@ Ingress-perf configuration is defined in a YAML file, holding an array of the fo
 
 | Field Name       | Type             | Description                                                                                 | Default Value | Tools |
 |------------------|------------------|---------------------------------------------------------------------------------------------|---------------|------------------|
-| `termination`    | `string`         | Benchmark termination. Allowed values are `http`, `edge`, `reencrypt` and `reencrypt`.      | N/A           | `wrk`,`hloader` |
+| `termination`    | `string`         | Benchmark termination. Allowed values are `http`, `edge`, `passthrough` and `reencrypt`.    | N/A           | `wrk`,`hloader` |
 | `connections`    | `int`            | Number of connections per client.                                                           | `0`           | `wrk`,`hloader` |
 | `samples`        | `int`            | Number of samples per scenario.                                                             | `0`           | `wrk`,`hloader` |
 | `duration`       | `time.Duration`  | Duration of each sample.                                                                    | `""`          | `wrk`,`hloader` |
@@ -82,7 +82,7 @@ Go 1.19 is required
 
 ```console
 $ make build
-GOARCH=amd64 CGO_ENABLED=0 go build -v -ldflags "-X github.com/cloud-bulldozer/go-commons/version.GitCommit=34d5810c80185f788c67c41ea9e904bc22a98908 -X github.com/cloud-bulldozer/go-commons/version.Version=ingress-gateway -X github.com/cloud-bulldozer/go-commons/version.BuildDate=2024-02-01-10:23:15" -o bin/ingress-perf cmd/ingress-perf.go
+GOARCH=`go env GOARCH` CGO_ENABLED=0 go build -v -ldflags "-X github.com/cloud-bulldozer/go-commons/version.GitCommit=34d5810c80185f788c67c41ea9e904bc22a98908 -X github.com/cloud-bulldozer/go-commons/version.Version=ingress-gateway -X github.com/cloud-bulldozer/go-commons/version.BuildDate=2024-02-01-10:23:15" -o bin/ingress-perf cmd/ingress-perf.go
 $ ls bin/ingress-perf
 ingress-perf
 ```
