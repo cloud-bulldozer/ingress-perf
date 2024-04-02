@@ -33,10 +33,9 @@ container-build:
 	-t $(CONTAINER_NS)/$(BIN_NAME) ./containers
 
 gha-build:
-	@echo "Building Multi-architecture container Images"
-	$(CONTAINER_BUILD) --jobs=2 -f containers/Containerfile \
-	--platform=linux/amd64,linux/arm64 \
-	./containers --manifest=$(CONTAINER_NS)/$(BIN_NAME):latest
+	@echo "Building Multi-architecture container images"
+	$(CONTAINER_BUILD) --jobs=2 -f containers/Containerfile --platform=linux/amd64,linux/arm64 ./containers --manifest=$(CONTAINER_NS)/$(BIN_NAME):latest
+	$(CONTAINER_BUILD) --jobs=2 -f containers/Containerfile.extra --platform=linux/ppc64le,linux/s390x ./containers --manifest=$(CONTAINER_NS)/$(BIN_NAME):latest
 
 gha-push: gha-build
 	@echo "Publish the Container Images"
