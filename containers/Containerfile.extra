@@ -1,0 +1,3 @@
+FROM registry.access.redhat.com/ubi8/ubi:latest
+RUN dnf install -y iproute procps-ng
+RUN curl -sS -L https://github.com/rsevilla87/hloader/releases/download/v0.2.1/hloader-Linux-v0.2.1-$(arch).tar.gz | tar xz -C /usr/bin/

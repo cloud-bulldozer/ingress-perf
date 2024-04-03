@@ -32,7 +32,7 @@ Ingress-perf configuration is defined in a YAML file, holding an array of the fo
 ## Supported tools
 
 - wrk: HTTP benchmarking tool. https://github.com/wg/wrk. amd64 and arm64
-- hloader: https://github.com/rsevilla87/hloader
+- hloader: https://github.com/rsevilla87/hloader. amd64, arm64, ppc64le and s390x
 
 ## Running
 
