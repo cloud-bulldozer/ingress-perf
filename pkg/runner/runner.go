@@ -153,7 +153,7 @@ func (r *Runner) Start() error {
 	for i, cfg := range config.Cfg {
 		cfg.UUID = r.uuid
 		log.Infof("Running test %d/%d", i+1, len(config.Cfg))
-		log.Infof("Tool:%s termination:%v servers:%d concurrency:%d procs:%d connections:%d duration:%v",
+		log.Infof("Tool:%s termination:%v servers:%d concurrency:%d procs:%d connections:%d duration:%v http2:%v",
 			cfg.Tool,
 			cfg.Termination,
 			cfg.ServerReplicas,
@@ -161,6 +161,7 @@ func (r *Runner) Start() error {
 			cfg.Procs,
 			cfg.Connections,
 			cfg.Duration,
+			cfg.HTTP2,
 		)
 		if err := reconcileNs(cfg); err != nil {
 			return err
