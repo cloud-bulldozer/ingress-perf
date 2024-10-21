@@ -38,15 +38,38 @@ import (
 
 var lock = &sync.Mutex{}
 
-func runBenchmark(cfg config.Config, clusterMetadata tools.ClusterMetadata, p *prometheus.Prometheus, podMetrics bool) ([]tools.Result, error) {
+func runBenchmark(
+	cfg config.Config,
+	clusterMetadata tools.ClusterMetadata,
+	p *prometheus.Prometheus,
+	podMetrics bool,
+	isGatewayApiEnabled bool,
+) ([]tools.Result, error) {
 	var aggAvgRps, aggAvgLatency, aggP95Latency float64
 	var timeouts, httpErrors int64
 	var benchmarkResult []tools.Result
 	var clientPods []corev1.Pod
 	var ep string
-	r, err := orClientSet.RouteV1().Routes(routesNamespace).Get(context.TODO(), fmt.Sprintf("%s-%s", serverName, cfg.Termination), metav1.GetOptions{})
-	if err != nil {
-		return benchmarkResult, err
+	if isGatewayApiEnabled {
+		hr, err := hrClientSet.GatewayV1beta1().HTTPRoutes(routesNamespace).
+			Get(context.TODO(), serverName, metav1.GetOptions{})
+		if err != nil {
+			return benchmarkResult, err
+		} else if cfg.Termination == "http" {
+			ep = fmt.Sprintf("http://%v%v", hr.Spec.Hostnames[0], cfg.Path)
+		} else {
+			ep = fmt.Sprintf("https://%v%v", hr.Spec.Hostnames[0], cfg.Path)
+		}
+	} else {
+		r, err := orClientSet.RouteV1().Routes(routesNamespace).
+			Get(context.TODO(), fmt.Sprintf("%s-%s", serverName, cfg.Termination), metav1.GetOptions{})
+		if err != nil {
+			return benchmarkResult, err
+		} else if cfg.Termination == "http" {
+			ep = fmt.Sprintf("http://%v%v", r.Spec.Host, cfg.Path)
+		} else {
+			ep = fmt.Sprintf("https://%v%v", r.Spec.Host, cfg.Path)
+		}
 	}
 	allClientPods, err := clientSet.CoreV1().Pods(benchmarkNs.Name).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("app=%s", clientName),
@@ -81,11 +104,6 @@ func runBenchmark(cfg config.Config, clusterMetadata tools.ClusterMetadata, p *p
 			for i := 0; i < cfg.Procs; i++ {
 				func(p corev1.Pod) {
 					errGroup.Go(func() error {
-						if cfg.Termination == "http" {
-							ep = fmt.Sprintf("http://%v%v", r.Spec.Host, cfg.Path)
-						} else {
-							ep = fmt.Sprintf("https://%v%v", r.Spec.Host, cfg.Path)
-						}
 						tool, err := tools.New(cfg, ep)
 						if err != nil {
 							return err
