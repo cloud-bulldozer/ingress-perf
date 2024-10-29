@@ -72,7 +72,6 @@ func runBenchmark(
 	}
 
 	ep = fmt.Sprintf("%s://%v%v", protocol, host, cfg.Path)
-
 	allClientPods, err := clientSet.CoreV1().Pods(benchmarkNs.Name).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("app=%s", clientName),
 	})

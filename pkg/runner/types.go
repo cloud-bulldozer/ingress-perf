@@ -53,7 +53,6 @@ type OptsFunctions func(r *Runner)
 var routesNamespace = benchmarkNs.Name
 var gatewayClassName string = "openshift-default"
 var gatewayNamespace gatewayv1beta1.Namespace = "openshift-ingress"
-var applicationNamespace gatewayv1beta1.Namespace = "ingress-perf"
 var portNumber gatewayv1beta1.PortNumber = 8080
 var tlsType gatewayv1beta1.TLSModeType = "Terminate"
 var fromNamespaces gatewayv1beta1.FromNamespaces = "All"
@@ -429,9 +428,8 @@ var httproutes = gatewayv1beta1.HTTPRoute{
 					{
 						BackendRef: gatewayv1beta1.BackendRef{
 							BackendObjectReference: gatewayv1beta1.BackendObjectReference{
-								Name:      gatewayv1beta1.ObjectName(service.Name),
-								Namespace: &applicationNamespace,
-								Port:      &portNumber,
+								Name: gatewayv1beta1.ObjectName(service.Name),
+								Port: &portNumber,
 							},
 						},
 					},
