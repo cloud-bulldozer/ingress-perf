@@ -16,7 +16,6 @@ package runner
 
 import (
 	"fmt"
-	ex "os/exec"
 
 	"github.com/cloud-bulldozer/go-commons/indexers"
 	routev1 "github.com/openshift/api/route/v1"
@@ -56,10 +55,8 @@ var gatewayNamespace gatewayv1beta1.Namespace = "openshift-ingress"
 var portNumber gatewayv1beta1.PortNumber = 8080
 var tlsType gatewayv1beta1.TLSModeType = "Terminate"
 var fromNamespaces gatewayv1beta1.FromNamespaces = "All"
-var domainName = ex.Command("oc", "get", "ingresses.config/cluster", "-o", "jsonpath={.spec.domain}")
-var output, err = domainName.CombinedOutput()
-var hostName string = "nginx.gwapi." + string(output)
-var listenerHostName = gatewayv1beta1.Hostname("*.gwapi." + string(output))
+var listenerHostName gatewayv1beta1.Hostname
+var ingressDomain string
 
 var benchmarkNs = corev1.Namespace{
 	ObjectMeta: metav1.ObjectMeta{
@@ -411,9 +408,6 @@ var httproutes = gatewayv1beta1.HTTPRoute{
 		Name: service.Name,
 	},
 	Spec: gatewayv1beta1.HTTPRouteSpec{
-		Hostnames: []gatewayv1beta1.Hostname{
-			gatewayv1beta1.Hostname(hostName),
-		},
 		CommonRouteSpec: gatewayv1beta1.CommonRouteSpec{
 			ParentRefs: []gatewayv1beta1.ParentReference{
 				{

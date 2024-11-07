@@ -43,6 +43,7 @@ import (
 	openshiftrouteclientset "github.com/openshift/client-go/route/clientset/versioned"
 	istioclient "istio.io/client-go/pkg/clientset/versioned"
 	"k8s.io/client-go/tools/clientcmd"
+	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	gatewayApiClientset "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 )
 
@@ -302,6 +303,10 @@ func (r *Runner) deployAssets() error {
 		}
 	}
 	if r.gatewayApi {
+		ocpMetadata, _ := ocpmetadata.NewMetadata(restConfig)
+		ingressDomain, _ = ocpMetadata.GetDefaultIngressDomain()
+		listenerHostName = gatewayv1beta1.Hostname("*.gwapi." + ingressDomain)
+		httproutes.Spec.Hostnames = append(httproutes.Spec.Hostnames, gatewayv1beta1.Hostname("nginx.gwapi."+ingressDomain))
 		log.Debugf("Creating GatewayClass...")
 		_, err = hrClientSet.GatewayV1beta1().GatewayClasses().Create(context.TODO(), gatewayClass, metav1.CreateOptions{})
 		if err != nil && !errors.IsAlreadyExists(err) {
