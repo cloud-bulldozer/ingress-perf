@@ -304,7 +304,10 @@ func (r *Runner) deployAssets() error {
 	}
 	if r.gatewayApi {
 		ocpMetadata, _ := ocpmetadata.NewMetadata(restConfig)
-		ingressDomain, _ = ocpMetadata.GetDefaultIngressDomain()
+		ingressDomain, err = ocpMetadata.GetDefaultIngressDomain()
+		if err != nil {
+			return err
+		}
 		listenerHostName = gatewayv1beta1.Hostname("*.gwapi." + ingressDomain)
 		httproutes.Spec.Hostnames = append(httproutes.Spec.Hostnames, gatewayv1beta1.Hostname("nginx.gwapi."+ingressDomain))
 		log.Debugf("Creating GatewayClass...")
