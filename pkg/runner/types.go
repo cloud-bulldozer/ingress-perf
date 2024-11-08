@@ -43,14 +43,14 @@ type Runner struct {
 	podMetrics  bool
 	cleanup     bool
 	serviceMesh bool
-	gatewayApi  bool
+	gatewayAPI  bool
 	igNamespace string
 }
 
 type OptsFunctions func(r *Runner)
 
 var routesNamespace = benchmarkNs.Name
-var gatewayClassName string = "openshift-default"
+var gatewayClassName = "openshift-default"
 var gatewayNamespace gatewayv1beta1.Namespace = "openshift-ingress"
 var portNumber gatewayv1beta1.PortNumber = 8080
 var tlsType gatewayv1beta1.TLSModeType = "Terminate"

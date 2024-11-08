@@ -43,7 +43,7 @@ func runBenchmark(
 	clusterMetadata tools.ClusterMetadata,
 	p *prometheus.Prometheus,
 	podMetrics bool,
-	isGatewayApiEnabled bool,
+	isGatewayAPIEnabled bool,
 ) ([]tools.Result, error) {
 	var aggAvgRps, aggAvgLatency, aggP95Latency float64
 	var timeouts, httpErrors int64
@@ -51,7 +51,7 @@ func runBenchmark(
 	var clientPods []corev1.Pod
 	var ep string
 	var host string
-	if isGatewayApiEnabled {
+	if isGatewayAPIEnabled {
 		hr, err := hrClientSet.GatewayV1beta1().HTTPRoutes(routesNamespace).
 			Get(context.TODO(), serverName, metav1.GetOptions{})
 		if err != nil {

@@ -104,9 +104,9 @@ func WithServiceMesh(enable bool, igNamespace string) OptsFunctions {
 	}
 }
 
-func WithGatewayApi(enable bool) OptsFunctions {
+func WithGatewayAPI(enable bool) OptsFunctions {
 	return func(r *Runner) {
-		r.gatewayApi = enable
+		r.gatewayAPI = enable
 	}
 }
 
@@ -182,7 +182,7 @@ func (r *Runner) Start() error {
 				return err
 			}
 		}
-		if benchmarkResult, err = runBenchmark(cfg, clusterMetadata, p, r.podMetrics, r.gatewayApi); err != nil {
+		if benchmarkResult, err = runBenchmark(cfg, clusterMetadata, p, r.podMetrics, r.gatewayAPI); err != nil {
 			return err
 		}
 		if r.indexer != nil && !cfg.Warmup {
@@ -244,12 +244,13 @@ func cleanup(timeout time.Duration) error {
 	return clientSet.RbacV1().ClusterRoleBindings().Delete(context.Background(), clientCRB.Name, metav1.DeleteOptions{})
 }
 
+//nolint:gocyclo
 func (r *Runner) deployAssets() error {
 	log.Infof("Deploying benchmark assets")
 	if r.serviceMesh {
 		log.Info("Service mesh mode enabled")
 		benchmarkNs.Labels["istio-injection"] = "enabled"
-	} else if r.gatewayApi {
+	} else if r.gatewayAPI {
 		log.Info("Gateway API mode enabled")
 	}
 	_, err := clientSet.CoreV1().Namespaces().Create(context.TODO(), &benchmarkNs, metav1.CreateOptions{})
@@ -272,7 +273,7 @@ func (r *Runner) deployAssets() error {
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
 	}
-	if !r.gatewayApi {
+	if !r.gatewayAPI {
 		for _, route := range routes {
 			if r.serviceMesh {
 				route.Spec.To = v1.RouteTargetReference{
@@ -302,7 +303,7 @@ func (r *Runner) deployAssets() error {
 			return err
 		}
 	}
-	if r.gatewayApi {
+	if r.gatewayAPI {
 		ocpMetadata, _ := ocpmetadata.NewMetadata(restConfig)
 		ingressDomain, err = ocpMetadata.GetDefaultIngressDomain()
 		if err != nil {
