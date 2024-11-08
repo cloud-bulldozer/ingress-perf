@@ -1,6 +1,6 @@
 module github.com/cloud-bulldozer/ingress-perf
 
-go 1.20
+go 1.22
 
 require (
 	github.com/cloud-bulldozer/go-commons v1.0.10
