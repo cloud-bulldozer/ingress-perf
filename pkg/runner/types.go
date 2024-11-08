@@ -27,6 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
+	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 )
 
 const (
@@ -42,12 +43,20 @@ type Runner struct {
 	podMetrics  bool
 	cleanup     bool
 	serviceMesh bool
+	gatewayAPI  bool
 	igNamespace string
 }
 
 type OptsFunctions func(r *Runner)
 
 var routesNamespace = benchmarkNs.Name
+var gatewayClassName = "openshift-default"
+var gatewayNamespace gatewayv1beta1.Namespace = "openshift-ingress"
+var portNumber gatewayv1beta1.PortNumber = 8080
+var tlsType gatewayv1beta1.TLSModeType = "Terminate"
+var fromNamespaces gatewayv1beta1.FromNamespaces = "All"
+var listenerHostName gatewayv1beta1.Hostname
+var ingressDomain string
 
 var benchmarkNs = corev1.Namespace{
 	ObjectMeta: metav1.ObjectMeta{
@@ -325,6 +334,96 @@ var virtualService = v1networking.VirtualService{
 							Host: service.Name,
 							Port: &v1beta1.PortSelector{
 								Number: 8080,
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+}
+
+var gatewayClass = &gatewayv1beta1.GatewayClass{
+	TypeMeta: metav1.TypeMeta{
+		APIVersion: "gateway.networking.k8s.io/v1beta1",
+		Kind:       "GatewayClass",
+	},
+	ObjectMeta: metav1.ObjectMeta{
+		Name: gatewayClassName,
+	},
+	Spec: gatewayv1beta1.GatewayClassSpec{
+		ControllerName: "openshift.io/gateway-controller",
+	},
+}
+
+var gateway = gatewayv1beta1.Gateway{
+	TypeMeta: metav1.TypeMeta{
+		APIVersion: "gateway.networking.k8s.io/v1beta1",
+		Kind:       "Gateway",
+	},
+	ObjectMeta: metav1.ObjectMeta{
+		Name:      "gateway",
+		Namespace: string(gatewayNamespace),
+	},
+	Spec: gatewayv1beta1.GatewaySpec{
+		GatewayClassName: gatewayv1beta1.ObjectName(gatewayClassName),
+		Listeners: []gatewayv1beta1.Listener{
+
+			{
+				Name:     "http",
+				Port:     80,
+				Protocol: gatewayv1beta1.ProtocolType("HTTP"),
+				Hostname: &listenerHostName,
+				AllowedRoutes: &gatewayv1beta1.AllowedRoutes{
+					Namespaces: &gatewayv1beta1.RouteNamespaces{
+						From: &fromNamespaces,
+					},
+				},
+			},
+			{
+				Name:     "https",
+				Port:     443,
+				Protocol: gatewayv1beta1.ProtocolType("HTTPS"),
+				Hostname: &listenerHostName,
+				AllowedRoutes: &gatewayv1beta1.AllowedRoutes{
+					Namespaces: &gatewayv1beta1.RouteNamespaces{
+						From: &fromNamespaces,
+					},
+				},
+				TLS: &gatewayv1beta1.GatewayTLSConfig{
+					Mode: &tlsType,
+					CertificateRefs: []gatewayv1beta1.SecretObjectReference{
+						{
+							Name: "router-certs-default",
+						},
+					},
+				},
+			},
+		},
+	},
+}
+
+var httproutes = gatewayv1beta1.HTTPRoute{
+	ObjectMeta: metav1.ObjectMeta{
+		Name: service.Name,
+	},
+	Spec: gatewayv1beta1.HTTPRouteSpec{
+		CommonRouteSpec: gatewayv1beta1.CommonRouteSpec{
+			ParentRefs: []gatewayv1beta1.ParentReference{
+				{
+					Namespace: &gatewayNamespace,
+					Name:      gatewayv1beta1.ObjectName("gateway"),
+				},
+			},
+		},
+		Rules: []gatewayv1beta1.HTTPRouteRule{
+			{
+				BackendRefs: []gatewayv1beta1.HTTPBackendRef{
+					{
+						BackendRef: gatewayv1beta1.BackendRef{
+							BackendObjectReference: gatewayv1beta1.BackendObjectReference{
+								Name: gatewayv1beta1.ObjectName(service.Name),
+								Port: &portNumber,
 							},
 						},
 					},

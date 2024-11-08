@@ -76,9 +76,15 @@ Ingress-perf is compatible with the OpenShift implementation of the Istio ingres
 
 At the time of writing these lines only the `http` and `edge` terminations are supported.
 
+## Gateway API
+
+Ingress-perf is compatible with the OpenShift implementation of the Gateway API, provided by OpenShift Service Mesh. To enable this, it is necessary to pass the flag `--gateway-api=true`. When this flag specified, `ingress-perf` will create its httproute in the `ingress-perf` namespace.
+
+At the time of writing these lines only the `http` and `edge` terminations are supported.
+
 ## Compile
 
-Go 1.19 is required
+Go 1.22 is required
 
 ```console
 $ make build

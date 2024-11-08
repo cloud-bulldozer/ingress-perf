@@ -43,6 +43,8 @@ import (
 	openshiftrouteclientset "github.com/openshift/client-go/route/clientset/versioned"
 	istioclient "istio.io/client-go/pkg/clientset/versioned"
 	"k8s.io/client-go/tools/clientcmd"
+	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+	gatewayApiClientset "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 )
 
 var restConfig *rest.Config
@@ -50,6 +52,7 @@ var clientSet *kubernetes.Clientset
 var istioClient *istioclient.Clientset
 var dynamicClient *dynamic.DynamicClient
 var orClientSet *openshiftrouteclientset.Clientset
+var hrClientSet *gatewayApiClientset.Clientset
 var currentTuning string
 
 func New(uuid string, cleanup bool, opts ...OptsFunctions) *Runner {
@@ -101,6 +104,12 @@ func WithServiceMesh(enable bool, igNamespace string) OptsFunctions {
 	}
 }
 
+func WithGatewayAPI(enable bool) OptsFunctions {
+	return func(r *Runner) {
+		r.gatewayAPI = enable
+	}
+}
+
 func (r *Runner) Start() error {
 	var err error
 	var kubeconfig string
@@ -122,6 +131,7 @@ func (r *Runner) Start() error {
 	clientSet = kubernetes.NewForConfigOrDie(restConfig)
 	istioClient = istioclient.NewForConfigOrDie(restConfig)
 	orClientSet = openshiftrouteclientset.NewForConfigOrDie(restConfig)
+	hrClientSet = gatewayApiClientset.NewForConfigOrDie(restConfig)
 	dynamicClient = dynamic.NewForConfigOrDie(restConfig)
 	ocpMetadata, err := ocpmetadata.NewMetadata(restConfig)
 	if err != nil {
@@ -172,7 +182,7 @@ func (r *Runner) Start() error {
 				return err
 			}
 		}
-		if benchmarkResult, err = runBenchmark(cfg, clusterMetadata, p, r.podMetrics); err != nil {
+		if benchmarkResult, err = runBenchmark(cfg, clusterMetadata, p, r.podMetrics, r.gatewayAPI); err != nil {
 			return err
 		}
 		if r.indexer != nil && !cfg.Warmup {
@@ -234,11 +244,14 @@ func cleanup(timeout time.Duration) error {
 	return clientSet.RbacV1().ClusterRoleBindings().Delete(context.Background(), clientCRB.Name, metav1.DeleteOptions{})
 }
 
+//nolint:gocyclo
 func (r *Runner) deployAssets() error {
 	log.Infof("Deploying benchmark assets")
 	if r.serviceMesh {
 		log.Info("Service mesh mode enabled")
 		benchmarkNs.Labels["istio-injection"] = "enabled"
+	} else if r.gatewayAPI {
+		log.Info("Gateway API mode enabled")
 	}
 	_, err := clientSet.CoreV1().Namespaces().Create(context.TODO(), &benchmarkNs, metav1.CreateOptions{})
 	if err != nil && !errors.IsAlreadyExists(err) {
@@ -260,19 +273,22 @@ func (r *Runner) deployAssets() error {
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
 	}
-	for _, route := range routes {
-		if r.serviceMesh {
-			route.Spec.To = v1.RouteTargetReference{
-				Name: "istio-ingressgateway",
+	if !r.gatewayAPI {
+		for _, route := range routes {
+			if r.serviceMesh {
+				route.Spec.To = v1.RouteTargetReference{
+					Name: "istio-ingressgateway",
+				}
+				route.Spec.Port.TargetPort = intstr.FromString("http2")
+				routesNamespace = r.igNamespace
 			}
-			route.Spec.Port.TargetPort = intstr.FromString("http2")
-			routesNamespace = r.igNamespace
-		}
-		_, err := orClientSet.RouteV1().Routes(routesNamespace).Create(context.TODO(), &route, metav1.CreateOptions{})
-		if err != nil && !errors.IsAlreadyExists(err) {
-			return err
+			_, err := orClientSet.RouteV1().Routes(routesNamespace).Create(context.TODO(), &route, metav1.CreateOptions{})
+			if err != nil && !errors.IsAlreadyExists(err) {
+				return err
+			}
 		}
 	}
+
 	if r.serviceMesh {
 		routes, _ := orClientSet.RouteV1().Routes(routesNamespace).List(context.TODO(), metav1.ListOptions{LabelSelector: "app=ingress-perf"})
 		for _, r := range routes.Items {
@@ -283,6 +299,33 @@ func (r *Runner) deployAssets() error {
 			return err
 		}
 		_, err = istioClient.NetworkingV1beta1().VirtualServices(benchmarkNs.Name).Create(context.TODO(), &virtualService, metav1.CreateOptions{})
+		if err != nil && !errors.IsAlreadyExists(err) {
+			return err
+		}
+	}
+	if r.gatewayAPI {
+		ocpMetadata, _ := ocpmetadata.NewMetadata(restConfig)
+		ingressDomain, err = ocpMetadata.GetDefaultIngressDomain()
+		if err != nil {
+			return err
+		}
+		listenerHostName = gatewayv1beta1.Hostname("*.gwapi." + ingressDomain)
+		httproutes.Spec.Hostnames = append(httproutes.Spec.Hostnames, gatewayv1beta1.Hostname("nginx.gwapi."+ingressDomain))
+		log.Debugf("Creating GatewayClass...")
+		_, err = hrClientSet.GatewayV1beta1().GatewayClasses().Create(context.TODO(), gatewayClass, metav1.CreateOptions{})
+		if err != nil && !errors.IsAlreadyExists(err) {
+			return err
+		}
+		time.Sleep(5 * time.Second) // wait for ServiceMeshControlPlane to be ready
+		log.Debugf("Creating Gateway...")
+		_, err = hrClientSet.GatewayV1beta1().Gateways(string(gatewayNamespace)).Create(context.TODO(), &gateway, metav1.CreateOptions{})
+		if err != nil && !errors.IsAlreadyExists(err) {
+			return err
+		}
+		log.Debugf("Waiting 4 minutes for Gateway to be ready...")
+		time.Sleep(4 * time.Minute)
+		log.Debugf("Creating HTTPRoute...")
+		_, err := hrClientSet.GatewayV1beta1().HTTPRoutes(routesNamespace).Create(context.TODO(), &httproutes, metav1.CreateOptions{})
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
