@@ -67,7 +67,7 @@ func run() *cobra.Command {
 				uuid, cleanup,
 				runner.WithIndexer(esServer, esIndex, outputDir, podMetrics, esInsecureSkipVerify),
 				runner.WithServiceMesh(serviceMesh, igNamespace),
-				runner.WithGatewayAPI(gatewayAPI, gatewayLB, gwClassController),
+				runner.WithGatewayAPI(gatewayAPI, igNamespace, gatewayLB, gwClassController),
 			)
 			return r.Start()
 		},

@@ -97,20 +97,29 @@ func WithIndexer(esServer, esIndex, resultsDir string, podMetrics bool, esInsecu
 
 func WithServiceMesh(enable bool, igNamespace string) OptsFunctions {
 	return func(r *Runner) {
-		r.serviceMesh = enable
-		r.igNamespace = igNamespace
-		config.PrometheusQueries["avg_cpu_usage_ingress_gateway_pods"] =
-			fmt.Sprintf("avg(avg_over_time(sum(irate(container_cpu_usage_seconds_total{name!='', namespace='%s', pod=~'istio-ingressgateway.+'}[2m])) by (pod)[ELAPSED:]))", igNamespace)
-		config.PrometheusQueries["avg_memory_usage_ingress_gateway_pods_bytes"] =
-			fmt.Sprintf("avg(avg_over_time(sum(container_memory_working_set_bytes{name!='', namespace='%s', pod=~'istio-ingressgateway.+'}) by (pod)[ELAPSED:]))", igNamespace)
+		if enable {
+			r.serviceMesh = enable
+			r.igNamespace = igNamespace
+			config.PrometheusQueries["avg_cpu_usage_ingress_gateway_pods"] =
+				fmt.Sprintf("avg(avg_over_time(sum(irate(container_cpu_usage_seconds_total{name!='', namespace='%s', pod=~'istio-ingressgateway.+'}[2m])) by (pod)[ELAPSED:]))", igNamespace)
+			config.PrometheusQueries["avg_memory_usage_ingress_gateway_pods_bytes"] =
+				fmt.Sprintf("avg(avg_over_time(sum(container_memory_working_set_bytes{name!='', namespace='%s', pod=~'istio-ingressgateway.+'}) by (pod)[ELAPSED:]))", igNamespace)
+		}
 	}
 }
 
-func WithGatewayAPI(enable bool, gwLb, gwClassController string) OptsFunctions {
+func WithGatewayAPI(enable bool, igNamespace, gwLb, gwClassController string) OptsFunctions {
 	return func(r *Runner) {
-		r.gatewayAPI = enable
-		r.gwLb = gwLb
-		r.gwClassController = gwClassController
+		if enable {
+			r.gatewayAPI = enable
+			r.gwLb = gwLb
+			r.gwClassController = gwClassController
+			r.igNamespace = igNamespace
+			config.PrometheusQueries["avg_cpu_usage_ingress_gateway_pods"] =
+				fmt.Sprintf("avg(avg_over_time(sum(irate(container_cpu_usage_seconds_total{name!='', namespace='%s', container='istio-proxy'}[2m])) by (pod)[ELAPSED:]))", igNamespace)
+			config.PrometheusQueries["avg_memory_usage_ingress_gateway_pods_bytes"] =
+				fmt.Sprintf("avg(avg_over_time(sum(container_memory_working_set_bytes{name!='', namespace='%s', container='istio-proxy'}) by (pod)[ELAPSED:]))", igNamespace)
+		}
 	}
 }
 
@@ -196,7 +205,7 @@ func (r *Runner) Start() error {
 			// When not using local indexer, empty the documents array when all documents after indexing them
 			if _, ok := (*r.indexer).(*indexers.Local); !ok {
 				if indexDocuments(*r.indexer, benchmarkResultDocuments, indexers.IndexingOpts{}) != nil {
-					log.Errorf("Indexing error: %v", err.Error())
+					log.Errorf("Indexing error: %v", err)
 				}
 				benchmarkResultDocuments = []interface{}{}
 			}
@@ -333,6 +342,7 @@ func (r *Runner) deployAssets() error {
 			return err
 		}
 		log.Debugf("Creating HTTPRoute...")
+		httproutes.Spec.ParentRefs[0].Namespace = (*gwv1.Namespace)(&r.igNamespace)
 		_, err = hrClientSet.GatewayV1().HTTPRoutes(routesNamespace).Create(context.TODO(), &httproutes, metav1.CreateOptions{})
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
