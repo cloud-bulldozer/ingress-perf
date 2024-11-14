@@ -43,8 +43,8 @@ var versionCmd = &cobra.Command{
 }
 
 func run() *cobra.Command {
-	var cfg, uuid, esServer, esIndex, logLevel, outputDir, igNamespace string
-	var cleanup, esInsecureSkipVerify, podMetrics, serviceMesh, gatewayAPI bool
+	var cfg, uuid, esServer, esIndex, logLevel, outputDir, igNamespace, gatewayLB, gwClassController string
+	var cleanup, podMetrics, serviceMesh, gatewayAPI, esInsecureSkipVerify bool
 	cmd := &cobra.Command{
 		Use:           "run",
 		Short:         "Run benchmark",
@@ -67,7 +67,7 @@ func run() *cobra.Command {
 				uuid, cleanup,
 				runner.WithIndexer(esServer, esIndex, outputDir, podMetrics, esInsecureSkipVerify),
 				runner.WithServiceMesh(serviceMesh, igNamespace),
-				runner.WithGatewayAPI(gatewayAPI),
+				runner.WithGatewayAPI(gatewayAPI, gatewayLB, gwClassController),
 			)
 			return r.Start()
 		},
@@ -81,9 +81,11 @@ func run() *cobra.Command {
 	cmd.Flags().BoolVar(&cleanup, "cleanup", true, "Cleanup benchmark assets")
 	cmd.Flags().BoolVar(&podMetrics, "pod-metrics", false, "Index per pod metrics")
 	cmd.Flags().StringVar(&logLevel, "loglevel", "info", "Log level. Allowed levels are error, info and debug")
-	cmd.Flags().StringVar(&igNamespace, "gw-ns", "istio-system", "Ingress gateway namespace")
 	cmd.Flags().BoolVar(&serviceMesh, "service-mesh", false, "Enable service mesh mode")
-	cmd.Flags().BoolVar(&gatewayAPI, "gateway-api", false, "Enable gateway api mode")
+	cmd.Flags().StringVar(&igNamespace, "gw-ns", "istio-system", "Ingress gateway namespace")
+	cmd.Flags().BoolVar(&gatewayAPI, "gw-api", false, "Enable gateway API mode")
+	cmd.Flags().StringVar(&gatewayLB, "gw-lb", "gateway", "Name of the load balancer service of the gateway pods")
+	cmd.Flags().StringVar(&gwClassController, "gw-class", "openshift.io/gateway-controller", "Gateway class controller name")
 	cmd.MarkFlagRequired("cfg")
 	return cmd
 }

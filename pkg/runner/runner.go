@@ -32,6 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/utils/ptr"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -43,7 +44,7 @@ import (
 	openshiftrouteclientset "github.com/openshift/client-go/route/clientset/versioned"
 	istioclient "istio.io/client-go/pkg/clientset/versioned"
 	"k8s.io/client-go/tools/clientcmd"
-	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+	gwv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayApiClientset "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 )
 
@@ -105,9 +106,11 @@ func WithServiceMesh(enable bool, igNamespace string) OptsFunctions {
 	}
 }
 
-func WithGatewayAPI(enable bool) OptsFunctions {
+func WithGatewayAPI(enable bool, gwLb, gwClassController string) OptsFunctions {
 	return func(r *Runner) {
 		r.gatewayAPI = enable
+		r.gwLb = gwLb
+		r.gwClassController = gwClassController
 	}
 }
 
@@ -310,23 +313,27 @@ func (r *Runner) deployAssets() error {
 		if err != nil {
 			return err
 		}
-		listenerHostName = gatewayv1beta1.Hostname("*.gwapi." + ingressDomain)
-		httproutes.Spec.Hostnames = append(httproutes.Spec.Hostnames, gatewayv1beta1.Hostname("nginx.gwapi."+ingressDomain))
-		log.Debugf("Creating GatewayClass...")
-		_, err = hrClientSet.GatewayV1beta1().GatewayClasses().Create(context.TODO(), gatewayClass, metav1.CreateOptions{})
+		listenerHostName = gwv1.Hostname("*.gwapi." + ingressDomain)
+		httproutes.Spec.Hostnames = append(httproutes.Spec.Hostnames, gwv1.Hostname("nginx.gwapi."+ingressDomain))
+		svc, err := clientSet.CoreV1().Services(r.igNamespace).Get(context.TODO(), r.gwLb, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		gateway.Spec.Addresses = append(gateway.Spec.Addresses, gwv1.GatewayAddress{
+			Type:  ptr.To(gwv1.HostnameAddressType),
+			Value: svc.Name,
+		})
+		gateway.Spec.GatewayClassName = gwv1.ObjectName(r.gwClassController)
+		log.Debugf("Creating Gateway bound to gateway class %s", r.gwClassController)
+		_, err = hrClientSet.GatewayV1().Gateways(r.igNamespace).Create(context.TODO(), &gateway, metav1.CreateOptions{})
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
-		time.Sleep(5 * time.Second) // wait for ServiceMeshControlPlane to be ready
-		log.Debugf("Creating Gateway...")
-		_, err = hrClientSet.GatewayV1beta1().Gateways(string(gatewayNamespace)).Create(context.TODO(), &gateway, metav1.CreateOptions{})
-		if err != nil && !errors.IsAlreadyExists(err) {
+		if err := waitForGateway(r.igNamespace, gateway.Name, 4*time.Minute); err != nil {
 			return err
 		}
-		log.Debugf("Waiting 4 minutes for Gateway to be ready...")
-		time.Sleep(4 * time.Minute)
 		log.Debugf("Creating HTTPRoute...")
-		_, err := hrClientSet.GatewayV1beta1().HTTPRoutes(routesNamespace).Create(context.TODO(), &httproutes, metav1.CreateOptions{})
+		_, err = hrClientSet.GatewayV1().HTTPRoutes(r.igNamespace).Create(context.TODO(), &httproutes, metav1.CreateOptions{})
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
@@ -388,5 +395,24 @@ func waitForDeployment(ns, deployment string, maxWaitTimeout time.Duration) erro
 			}
 		}
 	}
+	return err
+}
+
+func waitForGateway(ns, gateway string, maxWaitTimeout time.Duration) error {
+	var err error
+	var gw *gwv1.Gateway
+	log.Infof("Waiting for gateway %s in ns %s to be programmed", gateway, ns)
+	err = wait.PollUntilContextTimeout(context.TODO(), time.Second, maxWaitTimeout, true, func(ctx context.Context) (bool, error) {
+		gw, err = hrClientSet.GatewayV1().Gateways(ns).Get(context.TODO(), gateway, metav1.GetOptions{})
+		if err != nil {
+			return false, err
+		}
+		for _, cond := range gw.Status.Conditions {
+			if cond.Reason == string(gwv1.GatewayConditionProgrammed) && cond.Status == metav1.ConditionTrue {
+				return true, nil
+			}
+		}
+		return false, nil
+	})
 	return err
 }
