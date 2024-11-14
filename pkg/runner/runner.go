@@ -333,7 +333,7 @@ func (r *Runner) deployAssets() error {
 			return err
 		}
 		log.Debugf("Creating HTTPRoute...")
-		_, err = hrClientSet.GatewayV1().HTTPRoutes(r.igNamespace).Create(context.TODO(), &httproutes, metav1.CreateOptions{})
+		_, err = hrClientSet.GatewayV1().HTTPRoutes(routesNamespace).Create(context.TODO(), &httproutes, metav1.CreateOptions{})
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
