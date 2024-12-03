@@ -27,7 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
-	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+	gwv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
 const (
@@ -38,24 +38,24 @@ const (
 )
 
 type Runner struct {
-	uuid        string
-	indexer     *indexers.Indexer
-	podMetrics  bool
-	cleanup     bool
-	serviceMesh bool
-	gatewayAPI  bool
-	igNamespace string
+	uuid              string
+	indexer           *indexers.Indexer
+	podMetrics        bool
+	cleanup           bool
+	serviceMesh       bool
+	gatewayAPI        bool
+	gwLb              string
+	igNamespace       string
+	gwClassController string
 }
 
 type OptsFunctions func(r *Runner)
 
 var routesNamespace = benchmarkNs.Name
-var gatewayClassName = "openshift-default"
-var gatewayNamespace gatewayv1beta1.Namespace = "openshift-ingress"
-var portNumber gatewayv1beta1.PortNumber = 8080
-var tlsType gatewayv1beta1.TLSModeType = "Terminate"
-var fromNamespaces gatewayv1beta1.FromNamespaces = "All"
-var listenerHostName gatewayv1beta1.Hostname
+var portNumber gwv1.PortNumber = 8080
+var tlsType gwv1.TLSModeType = "Terminate"
+var fromNamespaces gwv1.FromNamespaces = "All"
+var listenerHostName gwv1.Hostname
 var ingressDomain string
 
 var benchmarkNs = corev1.Namespace{
@@ -343,39 +343,19 @@ var virtualService = v1networking.VirtualService{
 	},
 }
 
-var gatewayClass = &gatewayv1beta1.GatewayClass{
-	TypeMeta: metav1.TypeMeta{
-		APIVersion: "gateway.networking.k8s.io/v1beta1",
-		Kind:       "GatewayClass",
-	},
+var gateway = gwv1.Gateway{
 	ObjectMeta: metav1.ObjectMeta{
-		Name: gatewayClassName,
+		Name: "gateway",
 	},
-	Spec: gatewayv1beta1.GatewayClassSpec{
-		ControllerName: "openshift.io/gateway-controller",
-	},
-}
-
-var gateway = gatewayv1beta1.Gateway{
-	TypeMeta: metav1.TypeMeta{
-		APIVersion: "gateway.networking.k8s.io/v1beta1",
-		Kind:       "Gateway",
-	},
-	ObjectMeta: metav1.ObjectMeta{
-		Name:      "gateway",
-		Namespace: string(gatewayNamespace),
-	},
-	Spec: gatewayv1beta1.GatewaySpec{
-		GatewayClassName: gatewayv1beta1.ObjectName(gatewayClassName),
-		Listeners: []gatewayv1beta1.Listener{
-
+	Spec: gwv1.GatewaySpec{
+		Listeners: []gwv1.Listener{
 			{
 				Name:     "http",
 				Port:     80,
-				Protocol: gatewayv1beta1.ProtocolType("HTTP"),
+				Protocol: gwv1.ProtocolType("HTTP"),
 				Hostname: &listenerHostName,
-				AllowedRoutes: &gatewayv1beta1.AllowedRoutes{
-					Namespaces: &gatewayv1beta1.RouteNamespaces{
+				AllowedRoutes: &gwv1.AllowedRoutes{
+					Namespaces: &gwv1.RouteNamespaces{
 						From: &fromNamespaces,
 					},
 				},
@@ -383,16 +363,16 @@ var gateway = gatewayv1beta1.Gateway{
 			{
 				Name:     "https",
 				Port:     443,
-				Protocol: gatewayv1beta1.ProtocolType("HTTPS"),
+				Protocol: gwv1.ProtocolType("HTTPS"),
 				Hostname: &listenerHostName,
-				AllowedRoutes: &gatewayv1beta1.AllowedRoutes{
-					Namespaces: &gatewayv1beta1.RouteNamespaces{
+				AllowedRoutes: &gwv1.AllowedRoutes{
+					Namespaces: &gwv1.RouteNamespaces{
 						From: &fromNamespaces,
 					},
 				},
-				TLS: &gatewayv1beta1.GatewayTLSConfig{
+				TLS: &gwv1.GatewayTLSConfig{
 					Mode: &tlsType,
-					CertificateRefs: []gatewayv1beta1.SecretObjectReference{
+					CertificateRefs: []gwv1.SecretObjectReference{
 						{
 							Name: "router-certs-default",
 						},
@@ -403,26 +383,25 @@ var gateway = gatewayv1beta1.Gateway{
 	},
 }
 
-var httproutes = gatewayv1beta1.HTTPRoute{
+var httproutes = gwv1.HTTPRoute{
 	ObjectMeta: metav1.ObjectMeta{
 		Name: service.Name,
 	},
-	Spec: gatewayv1beta1.HTTPRouteSpec{
-		CommonRouteSpec: gatewayv1beta1.CommonRouteSpec{
-			ParentRefs: []gatewayv1beta1.ParentReference{
+	Spec: gwv1.HTTPRouteSpec{
+		CommonRouteSpec: gwv1.CommonRouteSpec{
+			ParentRefs: []gwv1.ParentReference{
 				{
-					Namespace: &gatewayNamespace,
-					Name:      gatewayv1beta1.ObjectName("gateway"),
+					Name: gwv1.ObjectName("gateway"),
 				},
 			},
 		},
-		Rules: []gatewayv1beta1.HTTPRouteRule{
+		Rules: []gwv1.HTTPRouteRule{
 			{
-				BackendRefs: []gatewayv1beta1.HTTPBackendRef{
+				BackendRefs: []gwv1.HTTPBackendRef{
 					{
-						BackendRef: gatewayv1beta1.BackendRef{
-							BackendObjectReference: gatewayv1beta1.BackendObjectReference{
-								Name: gatewayv1beta1.ObjectName(service.Name),
+						BackendRef: gwv1.BackendRef{
+							BackendObjectReference: gwv1.BackendObjectReference{
+								Name: gwv1.ObjectName(service.Name),
 								Port: &portNumber,
 							},
 						},
