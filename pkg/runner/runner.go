@@ -411,8 +411,8 @@ func waitForDeployment(ns, deployment string, maxWaitTimeout time.Duration) erro
 func waitForGateway(ns, gateway string, maxWaitTimeout time.Duration) error {
 	var err error
 	var gw *gwv1.Gateway
-	log.Infof("Waiting for gateway %s in ns %s to be programmed", gateway, ns)
-	err = wait.PollUntilContextTimeout(context.TODO(), time.Second, maxWaitTimeout, true, func(ctx context.Context) (bool, error) {
+	log.Infof("Waiting for gateway/%s in ns %s to be programmed", gateway, ns)
+	err = wait.PollUntilContextTimeout(context.TODO(), time.Second, maxWaitTimeout, true, func(_ context.Context) (bool, error) {
 		gw, err = hrClientSet.GatewayV1().Gateways(ns).Get(context.TODO(), gateway, metav1.GetOptions{})
 		if err != nil {
 			return false, err
