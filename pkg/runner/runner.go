@@ -66,7 +66,7 @@ func New(uuid string, cleanup bool, opts ...OptsFunctions) *Runner {
 	return r
 }
 
-func WithIndexer(esServer, esIndex, resultsDir string, podMetrics bool) OptsFunctions {
+func WithIndexer(esServer, esIndex, resultsDir string, podMetrics bool, esInsecureSkipVerify bool) OptsFunctions {
 	return func(r *Runner) {
 		if esServer != "" || resultsDir != "" {
 			var indexerCfg indexers.IndexerConfig
@@ -75,6 +75,7 @@ func WithIndexer(esServer, esIndex, resultsDir string, podMetrics bool) OptsFunc
 					Type:    indexers.ElasticIndexer,
 					Servers: []string{esServer},
 					Index:   esIndex,
+					InsecureSkipVerify: esInsecureSkipVerify,
 				}
 			} else if resultsDir != "" {
 				indexerCfg = indexers.IndexerConfig{
