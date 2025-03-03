@@ -44,7 +44,7 @@ var versionCmd = &cobra.Command{
 
 func run() *cobra.Command {
 	var cfg, uuid, esServer, esIndex, logLevel, outputDir, igNamespace string
-	var cleanup, podMetrics, serviceMesh, gatewayAPI bool
+	var cleanup, esInsecureSkipVerify, podMetrics, serviceMesh, gatewayAPI bool
 	cmd := &cobra.Command{
 		Use:           "run",
 		Short:         "Run benchmark",
@@ -65,7 +65,7 @@ func run() *cobra.Command {
 			}
 			r := runner.New(
 				uuid, cleanup,
-				runner.WithIndexer(esServer, esIndex, outputDir, podMetrics),
+				runner.WithIndexer(esServer, esIndex, outputDir, podMetrics, esInsecureSkipVerify),
 				runner.WithServiceMesh(serviceMesh, igNamespace),
 				runner.WithGatewayAPI(gatewayAPI),
 			)
@@ -75,6 +75,7 @@ func run() *cobra.Command {
 	cmd.Flags().StringVarP(&cfg, "cfg", "c", "", "Configuration file")
 	cmd.Flags().StringVar(&uuid, "uuid", uid.NewV4().String(), "Benchmark uuid")
 	cmd.Flags().StringVar(&esServer, "es-server", "", "Elastic Search endpoint")
+	cmd.Flags().BoolVar(&esInsecureSkipVerify, "es-insecure-skip-verify", true, "Elastic Search insecure skip verify")
 	cmd.Flags().StringVar(&esIndex, "es-index", "ingress-performance", "Elasticsearch index")
 	cmd.Flags().StringVar(&outputDir, "output-dir", "output", "Store collected metrics in this directory")
 	cmd.Flags().BoolVar(&cleanup, "cleanup", true, "Cleanup benchmark assets")
