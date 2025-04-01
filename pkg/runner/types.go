@@ -222,7 +222,7 @@ var clientCRB = rbac.ClusterRoleBinding{
 var routes = []routev1.Route{
 	{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("%s-edge", serverName),
+			Name: fmt.Sprintf("edge"),
 			Labels: map[string]string{
 				"app": "ingress-perf",
 			},
@@ -234,6 +234,9 @@ var routes = []routev1.Route{
 			},
 			TLS: &routev1.TLSConfig{
 				Termination: routev1.TLSTerminationEdge,
+				ExternalCertificate: &routev1.LocalObjectReference{
+					Name: "my-external-cert",
+				},
 			},
 		},
 	},

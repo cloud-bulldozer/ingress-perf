@@ -60,7 +60,7 @@ func runBenchmark(
 		host = string(hr.Spec.Hostnames[0])
 	} else {
 		r, err := orClientSet.RouteV1().Routes(routesNamespace).
-			Get(context.TODO(), fmt.Sprintf("%s-%s", serverName, cfg.Termination), metav1.GetOptions{})
+			Get(context.TODO(), fmt.Sprintf("%s", cfg.Termination), metav1.GetOptions{})
 		if err != nil {
 			return benchmarkResult, err
 		}
