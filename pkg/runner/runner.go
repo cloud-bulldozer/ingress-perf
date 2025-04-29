@@ -17,6 +17,7 @@ package runner
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"time"
@@ -32,7 +33,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/utils/ptr"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -73,9 +73,9 @@ func WithIndexer(esServer, esIndex, resultsDir string, podMetrics bool, esInsecu
 			var indexerCfg indexers.IndexerConfig
 			if esServer != "" {
 				indexerCfg = indexers.IndexerConfig{
-					Type:    indexers.ElasticIndexer,
-					Servers: []string{esServer},
-					Index:   esIndex,
+					Type:               indexers.ElasticIndexer,
+					Servers:            []string{esServer},
+					Index:              esIndex,
 					InsecureSkipVerify: esInsecureSkipVerify,
 				}
 			} else if resultsDir != "" {
@@ -254,6 +254,7 @@ func cleanup(timeout time.Duration) error {
 	if err != nil {
 		return err
 	}
+	hrClientSet.GatewayV1().Gateways(gateway.GetNamespace()).Delete(context.TODO(), gateway.GetName(), metav1.DeleteOptions{})
 	return clientSet.RbacV1().ClusterRoleBindings().Delete(context.Background(), clientCRB.Name, metav1.DeleteOptions{})
 }
 
@@ -323,16 +324,8 @@ func (r *Runner) deployAssets() error {
 			return err
 		}
 		listenerHostName = gwv1.Hostname("*.gwapi." + ingressDomain)
-		httproutes.Spec.Hostnames = append(httproutes.Spec.Hostnames, gwv1.Hostname("nginx.gwapi."+ingressDomain))
-		svc, err := clientSet.CoreV1().Services(r.igNamespace).Get(context.TODO(), r.gwLb, metav1.GetOptions{})
-		if err != nil {
-			return err
-		}
-		gateway.Spec.Addresses = append(gateway.Spec.Addresses, gwv1.GatewayAddress{
-			Type:  ptr.To(gwv1.HostnameAddressType),
-			Value: svc.Name,
-		})
 		gateway.Spec.GatewayClassName = gwv1.ObjectName(r.gwClassController)
+		gateway.ObjectMeta.Namespace = r.igNamespace
 		log.Debugf("Creating Gateway bound to gateway class %s", r.gwClassController)
 		_, err = hrClientSet.GatewayV1().Gateways(r.igNamespace).Create(context.TODO(), &gateway, metav1.CreateOptions{})
 		if err != nil && !errors.IsAlreadyExists(err) {
@@ -341,12 +334,35 @@ func (r *Runner) deployAssets() error {
 		if err := waitForGateway(r.igNamespace, gateway.Name, 4*time.Minute); err != nil {
 			return err
 		}
+		httproutes.Spec.Hostnames = append(httproutes.Spec.Hostnames, gwv1.Hostname("nginx.gwapi."+ingressDomain))
+		httproutes.Spec.ParentRefs[0].Namespace = (*gwv1.Namespace)(&r.igNamespace)
 		log.Debugf("Creating HTTPRoute...")
 		httproutes.Spec.ParentRefs[0].Namespace = (*gwv1.Namespace)(&r.igNamespace)
 		_, err = hrClientSet.GatewayV1().HTTPRoutes(routesNamespace).Create(context.TODO(), &httproutes, metav1.CreateOptions{})
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
+
+		hr, err := hrClientSet.GatewayV1beta1().HTTPRoutes(routesNamespace).
+			Get(context.TODO(), serverName, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		log.Debugf("Checking HTTPRoute DNS record %s", hr.Spec.Hostnames[0])
+		err = wait.PollUntilContextTimeout(context.TODO(), time.Second, time.Minute, true, func(_ context.Context) (bool, error) {
+			addrs, err := net.LookupHost(string(hr.Spec.Hostnames[0]))
+			log.Debugf("HTTP Route %s addresses: %v", hr.Spec.Hostnames[0], addrs)
+			if len(addrs) == 0 {
+				return false, err
+			}
+			return true, err
+		})
+		if err != nil {
+			return err
+		}
+		// TODO This wait is a hack to ensure that the routes are ready to receive requests, we should perform it in a more native way
+		log.Info("Waiting for 2 minutes to ensure the routes are ready to receive requests")
+		time.Sleep(2 * time.Minute)
 	}
 	return nil
 }

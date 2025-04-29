@@ -82,10 +82,10 @@ func run() *cobra.Command {
 	cmd.Flags().BoolVar(&podMetrics, "pod-metrics", false, "Index per pod metrics")
 	cmd.Flags().StringVar(&logLevel, "loglevel", "info", "Log level. Allowed levels are error, info and debug")
 	cmd.Flags().BoolVar(&serviceMesh, "service-mesh", false, "Enable service mesh mode")
-	cmd.Flags().StringVar(&igNamespace, "gw-ns", "istio-system", "Ingress gateway namespace")
+	cmd.Flags().StringVar(&igNamespace, "gw-ns", "openshift-ingress", "Ingress gateway namespace")
 	cmd.Flags().BoolVar(&gatewayAPI, "gw-api", false, "Enable gateway API mode")
 	cmd.Flags().StringVar(&gatewayLB, "gw-lb", "gateway", "Name of the load balancer service of the gateway pods")
-	cmd.Flags().StringVar(&gwClassController, "gw-class", "openshift.io/gateway-controller", "Gateway class controller name")
+	cmd.Flags().StringVar(&gwClassController, "gw-class", "openshift-default", "Gateway class controller name")
 	cmd.MarkFlagRequired("cfg")
 	return cmd
 }
