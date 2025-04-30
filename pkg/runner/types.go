@@ -31,10 +31,11 @@ import (
 )
 
 const (
-	serverImage = "quay.io/cloud-bulldozer/nginx:latest"
-	serverName  = "nginx"
-	clientImage = "quay.io/cloud-bulldozer/ingress-perf:latest"
-	clientName  = "ingress-perf-client"
+	serverImage      = "quay.io/cloud-bulldozer/nginx:latest"
+	serverName       = "nginx"
+	clientImage      = "quay.io/cloud-bulldozer/ingress-perf:latest"
+	clientName       = "ingress-perf-client"
+	openshiftIngress = "openshift-ingress"
 )
 
 type Runner struct {
@@ -44,7 +45,6 @@ type Runner struct {
 	cleanup           bool
 	serviceMesh       bool
 	gatewayAPI        bool
-	gwLb              string
 	igNamespace       string
 	gwClassController string
 }
@@ -55,7 +55,7 @@ var routesNamespace = benchmarkNs.Name
 var portNumber gwv1.PortNumber = 8080
 var tlsType gwv1.TLSModeType = "Terminate"
 var fromNamespaces gwv1.FromNamespaces = "All"
-var certsNamespace gwv1.Namespace = "openshift-ingress"
+var certsNamespace gwv1.Namespace = openshiftIngress
 var listenerHostName gwv1.Hostname
 var ingressDomain string
 
@@ -347,7 +347,7 @@ var virtualService = v1networking.VirtualService{
 var gateway = gwv1.Gateway{
 	ObjectMeta: metav1.ObjectMeta{
 		Name:      "gateway",
-		Namespace: "openshift-ingress",
+		Namespace: openshiftIngress,
 	},
 	Spec: gwv1.GatewaySpec{
 		Listeners: []gwv1.Listener{

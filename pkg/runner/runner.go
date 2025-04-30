@@ -108,17 +108,16 @@ func WithServiceMesh(enable bool, igNamespace string) OptsFunctions {
 	}
 }
 
-func WithGatewayAPI(enable bool, igNamespace, gwLb, gwClassController string) OptsFunctions {
+func WithGatewayAPI(enable bool, gwClassController string) OptsFunctions {
 	return func(r *Runner) {
 		if enable {
 			r.gatewayAPI = enable
-			r.gwLb = gwLb
 			r.gwClassController = gwClassController
-			r.igNamespace = igNamespace
+			r.igNamespace = openshiftIngress
 			config.PrometheusQueries["avg_cpu_usage_ingress_gateway_pods"] =
-				fmt.Sprintf("avg(avg_over_time(sum(irate(container_cpu_usage_seconds_total{name!='', namespace='%s', container='istio-proxy'}[2m])) by (pod)[ELAPSED:]))", igNamespace)
+				fmt.Sprintf("avg(avg_over_time(sum(irate(container_cpu_usage_seconds_total{name!='', namespace='%s', container='istio-proxy'}[2m])) by (pod)[ELAPSED:]))", openshiftIngress)
 			config.PrometheusQueries["avg_memory_usage_ingress_gateway_pods_bytes"] =
-				fmt.Sprintf("avg(avg_over_time(sum(container_memory_working_set_bytes{name!='', namespace='%s', container='istio-proxy'}) by (pod)[ELAPSED:]))", igNamespace)
+				fmt.Sprintf("avg(avg_over_time(sum(container_memory_working_set_bytes{name!='', namespace='%s', container='istio-proxy'}) by (pod)[ELAPSED:]))", openshiftIngress)
 		}
 	}
 }
