@@ -352,8 +352,8 @@ func (r *Runner) deployAssets() error {
 		err = wait.PollUntilContextTimeout(context.TODO(), time.Second, time.Minute, true, func(_ context.Context) (bool, error) {
 			addrs, err := net.LookupHost(string(hr.Spec.Hostnames[0]))
 			log.Debugf("HTTP Route %s addresses: %v", hr.Spec.Hostnames[0], addrs)
-			if len(addrs) == 0 {
-				return false, err
+			if len(addrs) == 0 || err != nil {
+				return false, nil
 			}
 			return true, err
 		})
