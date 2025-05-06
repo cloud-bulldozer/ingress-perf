@@ -78,9 +78,11 @@ At the time of writing these lines only the `http` and `edge` terminations are s
 
 ## Gateway API
 
-Ingress-perf is compatible with the OpenShift implementation of the Gateway API, provided by OpenShift Service Mesh. To enable this, it is necessary to pass the flag `--gateway-api=true`. When this flag specified, `ingress-perf` will create its httproute in the `ingress-perf` namespace.
+Ingress-perf is compatible with the OpenShift implementation of the Gateway API. Pass the flag `--gw-api` to enable it. When this flag specified, `ingress-perf` will create a Gateway object in the `openshift-ingress` namespace (required as this gateway object has references to the `router-certs-default` secret in the same namespace) and a HTTPRoute in the `ingress-perf` namespace.
 
-At the time of writing these lines only the `http` and `edge` terminations are supported.
+By default, the gateway uses the the gateway class `openshift-default`, default one at the time of writing this text. However it can be overridden with the `--gw-class` flag.
+
+Currently, only `http` and `edge` terminations are supported.
 
 ## Compile
 
