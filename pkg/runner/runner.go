@@ -95,10 +95,10 @@ func WithIndexer(esServer, esIndex, resultsDir string, podMetrics bool, esInsecu
 	}
 }
 
-func WithServiceMesh(enable bool, igNamespace string) OptsFunctions {
+func WithServiceMesh(serviceMesh, igNamespace string) OptsFunctions {
 	return func(r *Runner) {
-		if enable {
-			r.serviceMesh = enable
+		if serviceMesh != "" {
+			r.serviceMesh = serviceMesh
 			r.igNamespace = igNamespace
 			config.PrometheusQueries["avg_cpu_usage_ingress_gateway_pods"] =
 				fmt.Sprintf("avg(avg_over_time(sum(irate(container_cpu_usage_seconds_total{name!='', namespace='%s', pod=~'istio-ingressgateway.+'}[2m])) by (pod)[ELAPSED:]))", igNamespace)
@@ -260,12 +260,21 @@ func cleanup(timeout time.Duration) error {
 //nolint:gocyclo
 func (r *Runner) deployAssets() error {
 	log.Infof("Deploying benchmark assets")
-	if r.serviceMesh {
-		log.Info("Service mesh mode enabled")
+	switch r.serviceMesh {
+	case sidecarMesh:
+		log.Info("Service mesh sidecar mode enabled")
 		benchmarkNs.Labels["istio-injection"] = "enabled"
-	} else if r.gatewayAPI {
-		log.Info("Gateway API mode enabled")
+	case ambientMesh:
+		log.Info("Service mesh ambient mode enabled")
+		benchmarkNs.Labels["istio.io/dataplane-mode"] = "ambient"
+	case "":
+		if r.gatewayAPI {
+			log.Info("Gateway API mode enabled")
+		}
+	default:
+		log.Warnf("Unknown service mesh mode specified: %s. Expected values: sidecar, ambient", r.serviceMesh)
 	}
+
 	_, err := clientSet.CoreV1().Namespaces().Create(context.TODO(), &benchmarkNs, metav1.CreateOptions{})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
@@ -288,7 +297,7 @@ func (r *Runner) deployAssets() error {
 	}
 	if !r.gatewayAPI {
 		for _, route := range routes {
-			if r.serviceMesh {
+			if r.serviceMesh != "" {
 				route.Spec.To = v1.RouteTargetReference{
 					Name: "istio-ingressgateway",
 				}
@@ -302,7 +311,7 @@ func (r *Runner) deployAssets() error {
 		}
 	}
 
-	if r.serviceMesh {
+	if r.serviceMesh != "" {
 		routes, _ := orClientSet.RouteV1().Routes(routesNamespace).List(context.TODO(), metav1.ListOptions{LabelSelector: "app=ingress-perf"})
 		for _, r := range routes.Items {
 			ingressGateway.Spec.Servers[0].Hosts = append(ingressGateway.Spec.Servers[0].Hosts, r.Spec.Host)

@@ -43,8 +43,8 @@ var versionCmd = &cobra.Command{
 }
 
 func run() *cobra.Command {
-	var cfg, uuid, esServer, esIndex, logLevel, outputDir, igNamespace, gwClassController string
-	var cleanup, podMetrics, serviceMesh, gatewayAPI, esInsecureSkipVerify bool
+	var cfg, uuid, esServer, esIndex, logLevel, outputDir, serviceMesh, igNamespace, gwClassController string
+	var cleanup, podMetrics, gatewayAPI, esInsecureSkipVerify bool
 	cmd := &cobra.Command{
 		Use:           "run",
 		Short:         "Run benchmark",
@@ -81,7 +81,7 @@ func run() *cobra.Command {
 	cmd.Flags().BoolVar(&cleanup, "cleanup", true, "Cleanup benchmark assets")
 	cmd.Flags().BoolVar(&podMetrics, "pod-metrics", false, "Index per pod metrics")
 	cmd.Flags().StringVar(&logLevel, "loglevel", "info", "Log level. Allowed levels are error, info and debug")
-	cmd.Flags().BoolVar(&serviceMesh, "service-mesh", false, "Enable service mesh mode")
+	cmd.Flags().StringVar(&serviceMesh, "service-mesh", "", "Enable service mesh by passing the mode: sidecar or ambient")
 	cmd.Flags().StringVar(&igNamespace, "gw-ns", "openshift-ingress", "Ingress gateway namespace, only applies to Service Mesh mode")
 	cmd.Flags().BoolVar(&gatewayAPI, "gw-api", false, "Enable gateway API mode")
 	cmd.Flags().StringVar(&gwClassController, "gw-class", "openshift-default", "Gateway class controller name")

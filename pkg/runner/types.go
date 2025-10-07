@@ -36,6 +36,8 @@ const (
 	clientImage      = "quay.io/cloud-bulldozer/ingress-perf:latest"
 	clientName       = "ingress-perf-client"
 	openshiftIngress = "openshift-ingress"
+	sidecarMesh      = "sidecar"
+	ambientMesh      = "ambient"
 )
 
 type Runner struct {
@@ -43,7 +45,7 @@ type Runner struct {
 	indexer           *indexers.Indexer
 	podMetrics        bool
 	cleanup           bool
-	serviceMesh       bool
+	serviceMesh       string
 	gatewayAPI        bool
 	igNamespace       string
 	gwClassController string
