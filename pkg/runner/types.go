@@ -19,8 +19,8 @@ import (
 
 	"github.com/cloud-bulldozer/go-commons/indexers"
 	routev1 "github.com/openshift/api/route/v1"
-	"istio.io/api/networking/v1beta1"
-	v1networking "istio.io/client-go/pkg/apis/networking/v1beta1"
+	v1 "istio.io/api/networking/v1"
+	v1networking "istio.io/client-go/pkg/apis/networking/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
@@ -31,13 +31,14 @@ import (
 )
 
 const (
-	serverImage      = "quay.io/cloud-bulldozer/nginx:latest"
-	serverName       = "nginx"
-	clientImage      = "quay.io/cloud-bulldozer/ingress-perf:latest"
-	clientName       = "ingress-perf-client"
-	openshiftIngress = "openshift-ingress"
-	sidecarMesh      = "sidecar"
-	ambientMesh      = "ambient"
+	serverImage         = "quay.io/cloud-bulldozer/nginx:latest"
+	serverName          = "nginx"
+	clientImage         = "quay.io/cloud-bulldozer/ingress-perf:latest"
+	clientName          = "ingress-perf-client"
+	openshiftIngress    = "openshift-ingress"
+	sidecarMesh         = "sidecar"
+	ambientMesh         = "ambient"
+	ambientWaypointMesh = "ambient-waypoint"
 )
 
 type Runner struct {
@@ -302,13 +303,13 @@ var ingressGateway = v1networking.Gateway{
 	ObjectMeta: metav1.ObjectMeta{
 		Name: "gateway",
 	},
-	Spec: v1beta1.Gateway{
+	Spec: v1.Gateway{
 		Selector: map[string]string{
 			"istio": "ingressgateway",
 		},
-		Servers: []*v1beta1.Server{
+		Servers: []*v1.Server{
 			{
-				Port: &v1beta1.Port{
+				Port: &v1.Port{
 					Number:   80,
 					Protocol: "HTTP",
 					Name:     "http",
@@ -322,25 +323,44 @@ var virtualService = v1networking.VirtualService{
 	ObjectMeta: metav1.ObjectMeta{
 		Name: "http",
 	},
-	Spec: v1beta1.VirtualService{
+	Spec: v1.VirtualService{
 		Hosts: []string{
 			"*",
 		},
 		Gateways: []string{
 			ingressGateway.Name,
 		},
-		Http: []*v1beta1.HTTPRoute{
+		Http: []*v1.HTTPRoute{
 			{
-				Route: []*v1beta1.HTTPRouteDestination{
+				Route: []*v1.HTTPRouteDestination{
 					{
-						Destination: &v1beta1.Destination{
+						Destination: &v1.Destination{
 							Host: service.Name,
-							Port: &v1beta1.PortSelector{
+							Port: &v1.PortSelector{
 								Number: 8080,
 							},
 						},
 					},
 				},
+			},
+		},
+	},
+}
+
+var waypoint = gwv1.Gateway{
+	ObjectMeta: metav1.ObjectMeta{
+		Name: "waypoint",
+		Labels: map[string]string{
+			"istio.io/waypoint-for": "service",
+		},
+	},
+	Spec: gwv1.GatewaySpec{
+		GatewayClassName: "istio-waypoint",
+		Listeners: []gwv1.Listener{
+			{
+				Name:     "mesh",
+				Port:     15008,
+				Protocol: "HBONE",
 			},
 		},
 	},

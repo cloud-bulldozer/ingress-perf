@@ -264,7 +264,7 @@ func (r *Runner) deployAssets() error {
 	case sidecarMesh:
 		log.Info("Service mesh sidecar mode enabled")
 		benchmarkNs.Labels["istio-injection"] = "enabled"
-	case ambientMesh:
+	case ambientMesh, ambientWaypointMesh:
 		log.Info("Service mesh ambient mode enabled")
 		benchmarkNs.Labels["istio.io/dataplane-mode"] = "ambient"
 	case "":
@@ -272,9 +272,8 @@ func (r *Runner) deployAssets() error {
 			log.Info("Gateway API mode enabled")
 		}
 	default:
-		log.Warnf("Unknown service mesh mode specified: %s. Expected values: sidecar, ambient", r.serviceMesh)
+		log.Warnf("Unknown service mesh mode specified: %s. Expected values: sidecar, ambient, ambient-waypoint", r.serviceMesh)
 	}
-
 	_, err := clientSet.CoreV1().Namespaces().Create(context.TODO(), &benchmarkNs, metav1.CreateOptions{})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
@@ -299,7 +298,7 @@ func (r *Runner) deployAssets() error {
 		for _, route := range routes {
 			if r.serviceMesh != "" {
 				route.Spec.To = v1.RouteTargetReference{
-					Name: "istio-ingressgateway",
+					Name: "ingressgateway",
 				}
 				route.Spec.Port.TargetPort = intstr.FromString("http2")
 				routesNamespace = r.igNamespace
@@ -316,13 +315,20 @@ func (r *Runner) deployAssets() error {
 		for _, r := range routes.Items {
 			ingressGateway.Spec.Servers[0].Hosts = append(ingressGateway.Spec.Servers[0].Hosts, r.Spec.Host)
 		}
-		_, err = istioClient.NetworkingV1beta1().Gateways(benchmarkNs.Name).Create(context.TODO(), &ingressGateway, metav1.CreateOptions{})
+		_, err = istioClient.NetworkingV1().Gateways(benchmarkNs.Name).Create(context.TODO(), &ingressGateway, metav1.CreateOptions{})
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
-		_, err = istioClient.NetworkingV1beta1().VirtualServices(benchmarkNs.Name).Create(context.TODO(), &virtualService, metav1.CreateOptions{})
+		_, err = istioClient.NetworkingV1().VirtualServices(benchmarkNs.Name).Create(context.TODO(), &virtualService, metav1.CreateOptions{})
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
+		}
+		if r.serviceMesh == ambientWaypointMesh {
+			_, err := hrClientSet.GatewayV1().Gateways(benchmarkNs.Name).Create(context.TODO(), &waypoint, metav1.CreateOptions{})
+			if err != nil && !errors.IsAlreadyExists(err) {
+				return err
+			}
+			log.Info("Service mesh ambient mode: waypoint deployed")
 		}
 	}
 	if r.gatewayAPI {
