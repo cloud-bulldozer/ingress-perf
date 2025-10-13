@@ -101,9 +101,9 @@ func WithServiceMesh(serviceMesh, igNamespace string) OptsFunctions {
 			r.serviceMesh = serviceMesh
 			r.igNamespace = igNamespace
 			config.PrometheusQueries["avg_cpu_usage_ingress_gateway_pods"] =
-				fmt.Sprintf("avg(avg_over_time(sum(irate(container_cpu_usage_seconds_total{name!='', namespace='%s', pod=~'istio-ingressgateway.+'}[2m])) by (pod)[ELAPSED:]))", igNamespace)
+				fmt.Sprintf("avg(avg_over_time(sum(irate(container_cpu_usage_seconds_total{name!='', namespace='%s', pod=~'ingressgateway.+'}[2m])) by (pod)[ELAPSED:]))", igNamespace)
 			config.PrometheusQueries["avg_memory_usage_ingress_gateway_pods_bytes"] =
-				fmt.Sprintf("avg(avg_over_time(sum(container_memory_working_set_bytes{name!='', namespace='%s', pod=~'istio-ingressgateway.+'}) by (pod)[ELAPSED:]))", igNamespace)
+				fmt.Sprintf("avg(avg_over_time(sum(container_memory_working_set_bytes{name!='', namespace='%s', pod=~'ingressgateway.+'}) by (pod)[ELAPSED:]))", igNamespace)
 		}
 	}
 }
