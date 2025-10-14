@@ -264,9 +264,13 @@ func (r *Runner) deployAssets() error {
 	case sidecarMesh:
 		log.Info("Service mesh sidecar mode enabled")
 		benchmarkNs.Labels["istio-injection"] = "enabled"
-	case ambientMesh, ambientWaypointMesh:
+	case ambientMesh:
 		log.Info("Service mesh ambient mode enabled")
 		benchmarkNs.Labels["istio.io/dataplane-mode"] = "ambient"
+	case ambientWaypointMesh:
+		log.Info("Service mesh ambient mode with waypoint enabled")
+		benchmarkNs.Labels["istio.io/dataplane-mode"] = "ambient"
+		benchmarkNs.Labels["istio.io/use-waypoint"] = "waypoint"
 	case "":
 		if r.gatewayAPI {
 			log.Info("Gateway API mode enabled")
