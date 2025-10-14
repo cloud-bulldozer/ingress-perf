@@ -31,14 +31,13 @@ import (
 )
 
 const (
-	serverImage         = "quay.io/cloud-bulldozer/nginx:latest"
-	serverName          = "nginx"
-	clientImage         = "quay.io/cloud-bulldozer/ingress-perf:latest"
-	clientName          = "ingress-perf-client"
-	openshiftIngress    = "openshift-ingress"
-	sidecarMesh         = "sidecar"
-	ambientMesh         = "ambient"
-	ambientWaypointMesh = "ambient-waypoint"
+	serverImage      = "quay.io/cloud-bulldozer/nginx:latest"
+	serverName       = "nginx"
+	clientImage      = "quay.io/cloud-bulldozer/ingress-perf:latest"
+	clientName       = "ingress-perf-client"
+	openshiftIngress = "openshift-ingress"
+	sidecarMesh      = "sidecar"
+	ambientMesh      = "ambient"
 )
 
 type Runner struct {
@@ -342,25 +341,6 @@ var virtualService = v1networking.VirtualService{
 						},
 					},
 				},
-			},
-		},
-	},
-}
-
-var waypoint = gwv1.Gateway{
-	ObjectMeta: metav1.ObjectMeta{
-		Name: "waypoint",
-		Labels: map[string]string{
-			"istio.io/waypoint-for": "service",
-		},
-	},
-	Spec: gwv1.GatewaySpec{
-		GatewayClassName: "istio-waypoint",
-		Listeners: []gwv1.Listener{
-			{
-				Name:     "mesh",
-				Port:     15008,
-				Protocol: "HBONE",
 			},
 		},
 	},

@@ -81,7 +81,7 @@ func run() *cobra.Command {
 	cmd.Flags().BoolVar(&cleanup, "cleanup", true, "Cleanup benchmark assets")
 	cmd.Flags().BoolVar(&podMetrics, "pod-metrics", false, "Index per pod metrics")
 	cmd.Flags().StringVar(&logLevel, "loglevel", "info", "Log level. Allowed levels are error, info and debug")
-	cmd.Flags().StringVar(&serviceMesh, "service-mesh", "", "Enable service mesh by passing the mode: sidecar, ambient or ambient-waypoint")
+	cmd.Flags().StringVar(&serviceMesh, "service-mesh", "", "Enable service mesh by passing the mode: sidecar or ambient")
 	cmd.Flags().StringVar(&igNamespace, "gw-ns", "istio-system", "Ingress gateway namespace, only applies to Service Mesh mode")
 	cmd.Flags().BoolVar(&gatewayAPI, "gw-api", false, "Enable gateway API mode")
 	cmd.Flags().StringVar(&gwClassController, "gw-class", "openshift-default", "Gateway class controller name")

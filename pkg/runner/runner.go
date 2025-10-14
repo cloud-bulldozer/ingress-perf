@@ -267,16 +267,12 @@ func (r *Runner) deployAssets() error {
 	case ambientMesh:
 		log.Info("Service mesh ambient mode enabled")
 		benchmarkNs.Labels["istio.io/dataplane-mode"] = "ambient"
-	case ambientWaypointMesh:
-		log.Info("Service mesh ambient mode with waypoint enabled")
-		benchmarkNs.Labels["istio.io/dataplane-mode"] = "ambient"
-		benchmarkNs.Labels["istio.io/use-waypoint"] = "waypoint"
 	case "":
 		if r.gatewayAPI {
 			log.Info("Gateway API mode enabled")
 		}
 	default:
-		log.Warnf("Unknown service mesh mode specified: %s. Expected values: sidecar, ambient, ambient-waypoint", r.serviceMesh)
+		return fmt.Errorf("unknown service mesh mode specified: %s, expected values: sidecar, ambient", r.serviceMesh)
 	}
 	_, err := clientSet.CoreV1().Namespaces().Create(context.TODO(), &benchmarkNs, metav1.CreateOptions{})
 	if err != nil && !errors.IsAlreadyExists(err) {
@@ -326,13 +322,6 @@ func (r *Runner) deployAssets() error {
 		_, err = istioClient.NetworkingV1().VirtualServices(benchmarkNs.Name).Create(context.TODO(), &virtualService, metav1.CreateOptions{})
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
-		}
-		if r.serviceMesh == ambientWaypointMesh {
-			_, err := hrClientSet.GatewayV1().Gateways(benchmarkNs.Name).Create(context.TODO(), &waypoint, metav1.CreateOptions{})
-			if err != nil && !errors.IsAlreadyExists(err) {
-				return err
-			}
-			log.Info("Service mesh ambient mode: waypoint deployed")
 		}
 	}
 	if r.gatewayAPI {
