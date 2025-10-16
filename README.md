@@ -74,7 +74,7 @@ Check out the `run` subcommand help for more info about the allowed flags.
 
 Ingress-perf is compatible with the OpenShift implementation of the Istio ingress-gateway, provided by OpenShift Service Mesh.
 It is expected that the gateway is already installed by using [gateway injection](https://docs.redhat.com/en/documentation/red_hat_openshift_service_mesh/3.1/html/gateways/ossm-about-gateways#ossm-installing-gateway-using-gateway-injection_ossm-about-gateways). 
-To enable the respective Service Mesh mode, pass the flag `--service-mesh=sidecar` or `--service-mesh=ambient`. When specified, `ingress-perf` will create its routes in the namespace specified by `--gw-ns` (deault: `istio-system`), these routes point to the http2 port of the `istio-ingressgateway` service. 4 gateways and 1 virtualservice are created in the `ingress-perf` namespace.
+To enable the respective Service Mesh mode, pass the flag `--service-mesh=sidecar` or `--service-mesh=ambient`. When specified, `ingress-perf` will create its routes in the namespace specified by `--gw-ns` (default: `istio-system`), these routes point to the http2 port of the `istio-ingressgateway` service. 4 gateways and 1 virtualservice are created in the `ingress-perf` namespace.
 
 At the time of writing these lines only the `http` and `edge` terminations are supported.
 
