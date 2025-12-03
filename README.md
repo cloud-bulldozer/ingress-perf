@@ -34,6 +34,18 @@ Ingress-perf configuration is defined in a YAML file, holding an array of the fo
 - wrk: HTTP benchmarking tool. https://github.com/wg/wrk. amd64 and arm64
 - hloader: https://github.com/rsevilla87/hloader. amd64, arm64, ppc64le and s390x
 
+## Quick start
+
+Install latest stable version with:
+
+```shell
+curl -Ls https://raw.githubusercontent.com/cloud-bulldozer/ingress-perf/refs/heads/main/hack/install.sh | sh
+```
+
+> [!NOTE]
+> Default installation path is `${HOME}/.local/bin/`, you can change it by setting the `INSTALL_DIR` environment variable to the desired path.
+> before running the script
+
 ## Running
 
 Running ingress-perf is trivial:
