@@ -155,10 +155,17 @@ func (r *Runner) Start() error {
 	if err != nil {
 		return err
 	}
-	promURL, promToken, err := ocpMetadata.GetPrometheus()
-	if err != nil {
-		log.Error("Error fetching prometheus information")
-		return err
+	// Allow overriding Prometheus URL and token via env vars.
+	// Useful for environments where the cluster's Prometheus route is not
+	// reachable from the test runner (e.g. bare-metal with private ingress IPs).
+	promURL := os.Getenv("PROMETHEUS_URL")
+	promToken := os.Getenv("PROMETHEUS_TOKEN")
+	if promURL == "" || promToken == "" {
+		promURL, promToken, err = ocpMetadata.GetPrometheus()
+		if err != nil {
+			log.Error("Error fetching prometheus information")
+			return err
+		}
 	}
 	p, err := prometheus.NewClient(promURL, promToken, "", "", true)
 	if err != nil {
